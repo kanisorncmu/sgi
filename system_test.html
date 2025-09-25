@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 3D Sentiment Galaxy - System Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+       .title {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            background-clip: text; /* Added for standard compliance */
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #ccc;
+            font-size: 1.1em;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .test-card {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(48, 47, 47, 0.1);
+            transition: all 0.3s;
+        }
+
+        .test-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+        }
+
+        .test-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #00ffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: auto;
+        }
+
+        .status-pending {
+            background: rgba(255,170,0,0.2);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+        }
+
+        .status-success {
+            background: rgba(0,255,136,0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .status-error {
+            background: rgba(255,68,68,0.2);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .test-content {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .test-output {
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border-left: 3px solid #00ffff;
+            word-wrap: break-word;
+        }
+
+        .test-button {
+            background: linear-gradient(45deg, #00ffff, #00ff88);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,255,255,0.4);
+        }
+
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .overall-status {
+            text-align: center;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .overall-success {
+            background: rgba(0,255,136,0.2);
+            color: #00ff88;
+            border: 2px solid #00ff88;
+        }
+
+        .overall-warning {
+            background: rgba(255,170,0,0.2);
+            color: #ffaa00;
+            border: 2px solid #ffaa00;
+        }
+
+        .overall-error {
+            background: rgba(255,68,68,0.2);
+            color: #ff4444;
+            border: 2px solid #ff4444;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.1);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #00ff88);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .links-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+
+        .link-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff00ff, #ff4466);
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            margin: 10px 10px 10px 0;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .link-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255,0,255,0.4);
+        }
+
+        .help-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+            border-left: 4px solid #00ffff;
+        }
+
+        .code {
+            background: rgba(0,0,0,0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00ffff;
+        }
+
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+        }
+
+        .spinner {
+            border: 3px solid rgba(0,255,255,0.3);
+            border-top: 3px solid #00ffff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🔧 System Test Dashboard</h1>
+            <p class="subtitle">3D Sentiment Galaxy - Component Verification</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <div class="test-title">
+                    🐘 PHP Configuration
+                    <span class="test-status status-pending" id="php-status">Pending</span>
+                </div>
+                <div class="test-content">
+                    <p>Testing PHP version, extensions, and basic functionality via API endpoint.</p>
+                    <div class="test-output" id="php-output">Click "Run Test" to check PHP setup...</div>
+                </div>
+                <button class="test-button" onclick="testPHP(event)">Run Test</button>
+            </div>
+
+            <div class="test-card">
+                <div class="test-title">
+                    🚀 API Health Check
+                    <span class="test-status status-pending" id="api-status">Pending</span>
+                </div>
+                <div class="test-content">
+                    <p>Testing API endpoint connectivity and response.</p>
+                    <div class="test-output" id="api-output">Click "Run Test" to check API health...</div>
+                </div>
+                <button class="test-button" onclick="testAPI(event)">Run Test</button>
+            </div>
+
+            <div class="test-card">
+                <div class="test-title">
+                    🗄️ Database Connection
+                    <span class="test-status status-pending" id="db-status">Pending</span>
+                </div>
+                <div class="test-content">
+                    <p>Testing database connectivity and data availability.</p>
+                    <div class="test-output" id="db-output">Click "Run Test" to check database...</div>
+                </div>
+                <button class="test-button" onclick="testDatabase(event)">Run Test</button>
+            </div>
+
+            <div class="test-card">
+                <div class="test-title">
+                    📊 Data Loading
+                    <span class="test-status status-pending" id="data-status">Pending</span>
+                </div>
+                <div class="test-content">
+                    <p>Testing data retrieval and format validation.</p>
+                    <div class="test-output" id="data-output">Click "Run Test" to load sample data...</div>
+                </div>
+                <button class="test-button" onclick="testDataLoading(event)">Run Test</button>
+            </div>
+
+            <div class="test-card">
+                <div class="test-title">
+                    🌐 Browser Compatibility  
+                    <span class="test-status status-pending" id="browser-status">Pending</span>
+                </div>
+                <div class="test-content">
+                    <p>Testing WebGL, 3D capabilities, and JavaScript features.</p>
+                    <div class="test-output" id="browser-output">Click "Run Test" to check browser...</div>
+                </div>
+                <button class="test-button" onclick="testBrowser(event)">Run Test</button>
+            </div>
+
+            <div class="test-card">
+                <div class="test-title">
+                    ⚡ Performance Check
+                    <span class="test-status status-pending" id="perf-status">Pending</span>
+                </div>
+                <div class="test-content">
+                    <p>Testing rendering performance and memory usage.</p>
+                    <div class="test-output" id="perf-output">Click "Run Test" to benchmark...</div>
+                </div>
+                <button class="test-button" onclick="testPerformance(event)">Run Test</button>
+            </div>
+        </div>
+
+        <div class="overall-status overall-warning" id="overallStatus">
+            System status: Pending. Run all tests to see overall results.
+        </div>
+
+        <div class="links-section">
+            <h3 style="margin-bottom: 15px; color: #00ffff;">🚀 Launch Application</h3>
+            <a href="sentiment_3d_bulletproof.html" class="link-button">Open 3D Visualization</a>
+            <a href="api_bulletproof.php?action=health" class="link-button" target="_blank">API Health</a>
+            <a href="api_bulletproof.php?action=summary" class="link-button" target="_blank">Data Summary</a>
+            
+            <h3 style="margin: 25px 0 15px; color: #00ffff;">📖 Documentation</h3>
+            <a href="README.md" class="link-button">Setup Guide</a>
+            <a href="#" class="link-button" onclick="showDiagnostics()">System Diagnostics</a>
+        </div>
+
+        <div class="help-section">
+            <h3 style="color: #00ffff; margin-bottom: 15px;">🆘 Troubleshooting Quick Guide</h3>
+            <p><strong>If API Health fails:</strong> Check if <span class="code">api_bulletproof.php</span> exists and PHP is running.</p>
+            <p><strong>If Database fails:</strong> Check MySQL service or let SQLite auto-create.</p>
+            <p><strong>If Browser test fails:</strong> Use a modern browser like Chrome, Firefox, or Safari.</p>
+            <p><strong>If Performance is poor:</strong> Reduce data points or enable performance mode in the main app.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINTS = [
+            'api_bulletproof.php',
+            './api_bulletproof.php',
+            'api.php'
+        ];
+        
+        let testResults = {};
+        const totalTests = 6;
+
+        function getButtonForTest(testName) {
+            const statusEl = document.getElementById(`${testName}-status`);
+            if (statusEl) {
+                return statusEl.closest('.test-card').querySelector('.test-button');
+            }
+            return null;
+        }
+
+        function updateProgress() {
+            const testsCompleted = Object.keys(testResults).length;
+            const progress = (testsCompleted / totalTests) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            if (testsCompleted === totalTests) {
+                updateOverallStatus();
+            }
+        }
+
+        function updateOverallStatus() {
+            const statusEl = document.getElementById('overallStatus');
+            const results = Object.values(testResults);
+            const successes = results.filter(r => r === 'success').length;
+            const errors = results.filter(r => r === 'error').length;
+            
+            statusEl.innerHTML = ''; // Clear previous content
+            
+            if (errors === 0) {
+                statusEl.className = 'overall-status overall-success';
+                statusEl.innerHTML = '✅ All systems operational! Ready to launch 3D Sentiment Galaxy.';
+            } else if (errors <= 2) {
+                statusEl.className = 'overall-status overall-warning'; 
+                statusEl.innerHTML = `⚠️ ${errors} component(s) need attention, but the system may still function.`;
+            } else {
+                statusEl.className = 'overall-status overall-error';
+                statusEl.innerHTML = `❌ Multiple system issues detected. Please check configuration.`;
+            }
+        }
+
+        function updateTestStatus(testName, status, output) {
+            const statusEl = document.getElementById(`${testName}-status`);
+            const outputEl = document.getElementById(`${testName}-output`);
+            
+            if (!testResults[testName]) { // Only count completion once
+                testResults[testName] = status;
+                updateProgress();
+            } else {
+                testResults[testName] = status;
+            }
+
+            statusEl.className = `test-status status-${status}`;
+            statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            outputEl.innerHTML = output;
+        }
+
+        // Generic test runner to handle button state
+        async function runTest(testName, event, testFunction) {
+            // FIX: Get button from event if clicked, or by query if called automatically
+            const button = event ? event.target : getButtonForTest(testName);
+            if (!button) return;
+
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>Testing...';
+            
+            await testFunction();
+
+            button.disabled = false;
+            button.textContent = 'Run Test';
+        }
+
+        async function testPHP(event) {
+            await runTest('php', event, async () => {
+                try {
+                    // FIX: Test by calling the actual API, which requires PHP to run.
+                    const testResponse = await fetch(API_ENDPOINTS[0] + '?action=health');
+                    
+                    if (!testResponse.ok) {
+                        throw new Error(`Server responded with HTTP ${testResponse.status}`);
+                    }
+
+                    const data = await testResponse.json();
+                    let output = `<strong>✅ PHP is working correctly via API</strong><br>`;
+                    output += `Status: ${data.success ? 'OK' : 'Error'}<br>`;
+                    output += `Message: ${data.message || 'API responded'}<br>`;
+                    output += `PHP Version: ${data.version || 'Unknown'}`;
+                    updateTestStatus('php', 'success', output);
+                } catch (error) {
+                    let output = `<strong>❌ PHP or Server Configuration Issue</strong><br>`;
+                    output += `Error: ${error.message}<br>`;
+                    output += `Check if your web server (e.g., Apache, Nginx) is running and configured to handle PHP files.`;
+                    updateTestStatus('php', 'error', output);
+                }
+            });
+        }
+
+        async function testAPI(event) {
+            await runTest('api', event, async () => {
+                let workingEndpoint = null;
+                for (const endpoint of API_ENDPOINTS) {
+                    try {
+                        const response = await fetch(`${endpoint}?action=health`);
+                        if (!response.ok) continue;
+
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const data = await response.json();
+                            let output = `<strong>✅ API Health Check Passed</strong><br>`;
+                            output += `Endpoint: ${endpoint}<br>`;
+                            output += `Status: ${data.success ? 'Healthy' : 'Issues detected'}<br>`;
+                            output += `Database: ${data.database?.type || 'Unknown'} (${data.database?.status || 'Unknown'})<br>`;
+                            output += `Records: ${data.database?.record_count?.toLocaleString() || '0'}`;
+                            updateTestStatus('api', 'success', output);
+                            workingEndpoint = endpoint;
+                            break;
+                        }
+                    } catch (error) { /* Ignore failed endpoints and try the next */ }
+                }
+                
+                if (!workingEndpoint) {
+                    let output = `<strong>❌ All API endpoints failed</strong><br>`;
+                    output += `Tested: ${API_ENDPOINTS.join(', ')}<br>`;
+                    output += `Common causes: PHP not running, API file missing, or incorrect file permissions.`;
+                    updateTestStatus('api', 'error', output);
+                }
+            });
+        }
+
+        async function testDatabase(event) {
+            await runTest('db', event, async () => {
+                try {
+                    const response = await fetch(`${API_ENDPOINTS[0]}?action=summary`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error || 'Database query failed');
+
+                    let output = `<strong>✅ Database Connection Successful</strong><br>`;
+                    output += `Type: ${data.database_type || 'Unknown'}<br>`;
+                    output += `Records: ${data.summary?.total_records?.toLocaleString() || '0'}<br>`;
+                    output += `Provinces: ${data.summary?.total_provinces || '0'}<br>`;
+                    output += `Sentiment Counts: P:${data.summary?.positive_count}, N:${data.summary?.neutral_count}, N:${data.summary?.negative_count}`;
+                    updateTestStatus('db', 'success', output);
+                } catch (error) {
+                    let output = `<strong>❌ Database Connection Failed</strong><br>`;
+                    output += `Error: ${error.message}<br>`;
+                    output += `Check API and DB configuration. SQLite will be auto-created if MySQL fails.`;
+                    updateTestStatus('db', 'error', output);
+                }
+            });
+        }
+
+        async function testDataLoading(event) {
+            await runTest('data', event, async () => {
+                try {
+                    const response = await fetch(`${API_ENDPOINTS[0]}?action=clustered&zoom=1&limit=50`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    if (!data.success || !data.data || data.data.length === 0) {
+                        throw new Error(data.error || 'No data returned or data format incorrect');
+                    }
+                    
+                    const sample = data.data[0];
+                    let output = `<strong>✅ Data Loading Successful</strong><br>`;
+                    output += `Retrieved: ${data.count} points<br>`;
+                    output += `Zoom Level: ${data.zoom_level} (${data.zoom_description || 'N/A'})<br>`;
+                    output += `Sample: [${sample.province}, ${sample.label_str}, Conf: ${(sample.confidence * 100)?.toFixed(1)}%]`;
+                    updateTestStatus('data', 'success', output);
+                } catch (error) {
+                    let output = `<strong>❌ Data Loading Failed</strong><br>`;
+                    output += `Error: ${error.message}<br>`;
+                    output += `Possible causes: Empty database, API endpoint issues, or data format problems.`;
+                    updateTestStatus('data', 'error', output);
+                }
+            });
+        }
+
+        async function testBrowser(event) {
+            await runTest('browser', event, () => new Promise(resolve => {
+                setTimeout(() => {
+                    let output = `<strong>Browser Compatibility Check</strong><br>`;
+                    let issues = 0;
+                    
+                    // WebGL support
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    output += gl ? `✅ WebGL: Supported<br>` : `❌ WebGL: Not supported<br>`;
+                    if (!gl) issues++;
+                    
+                    // Modern JS features
+                    try { new Function('() => {}'); output += `✅ ES6 Features: Supported<br>`; } 
+                    catch (e) { output += `❌ ES6 Features: Not supported<br>`; issues++; }
+
+                    if (typeof fetch !== 'undefined') { output += `✅ Fetch API: Supported<br>`; }
+                    else { output += `❌ Fetch API: Not supported<br>`; issues++; }
+
+                    output += `User Agent: ${navigator.userAgentData?.brands[0]?.brand || 'N/A'} ${navigator.userAgentData?.brands[0]?.version || ''}<br>`;
+                    
+                    const status = issues === 0 ? 'success' : 'error';
+                    updateTestStatus('browser', status, output);
+                    resolve();
+                }, 500);
+            }));
+        }
+
+        async function testPerformance(event) {
+            await runTest('perf', event, () => new Promise(resolve => {
+                setTimeout(() => {
+                    let frames = 0;
+                    const startTime = performance.now();
+                    
+                    function perfLoop() {
+                        frames++;
+                        if (performance.now() - startTime < 1000) {
+                            requestAnimationFrame(perfLoop);
+                        } else {
+                            const fps = frames;
+                            let output = `<strong>Performance Benchmark (1s)</strong><br>`;
+                            output += `Estimated FPS: ~${fps}<br>`;
+                            output += `CPU Cores: ${navigator.hardwareConcurrency || 'Unknown'}<br>`;
+                            
+                            if (fps >= 55) {
+                                output += `✅ Performance: Excellent`;
+                                updateTestStatus('perf', 'success', output);
+                            } else if (fps >= 30) {
+                                output += `⚠️ Performance: Good`;
+                                updateTestStatus('perf', 'success', output); // Still considered a success
+                            } else {
+                                output += `❌ Performance: Poor`;
+                                updateTestStatus('perf', 'error', output);
+                            }
+                            resolve();
+                        }
+                    }
+                    requestAnimationFrame(perfLoop);
+                }, 500);
+            }));
+        }
+
+        function runAllTests() {
+            const tests = [testPHP, testAPI, testDatabase, testDataLoading, testBrowser, testPerformance];
+            tests.forEach((testFunc, index) => {
+                setTimeout(() => testFunc(), index * 1000 + 500);
+            });
+        }
+
+        function showDiagnostics() {
+            const diag = {
+                userAgent: navigator.userAgent,
+                viewport: `${window.innerWidth}x${window.innerHeight}`,
+                memory: navigator.deviceMemory || 'Unknown',
+                cores: navigator.hardwareConcurrency || 'Unknown',
+                webgl: !!(document.createElement('canvas').getContext('webgl')),
+                currentTime: new Date().toISOString(),
+                testResults: testResults
+            };
+            
+            const diagWindow = window.open('', '_blank');
+            diagWindow.document.write(`<html><head><title>System Diagnostics</title></head><body style="font-family: monospace; background: #121212; color: #eee; padding: 20px;"><h2>System Diagnostics</h2><pre>${JSON.stringify(diag, null, 2)}</pre></body></html>`);
+        }
+
+        window.addEventListener('load', () => {
+            // Reset state on load
+            testResults = {};
+            updateProgress();
+            document.getElementById('overallStatus').className = 'overall-status overall-warning';
+            document.getElementById('overallStatus').innerHTML = 'System status: Pending. Run all tests to see overall results.';
+
+            setTimeout(() => {
+                if (confirm('Do you want to run all system tests automatically? This will take about 6 seconds.')) {
+                    runAllTests();
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

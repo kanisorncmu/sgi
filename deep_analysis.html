@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Scatter Plot from API</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #000000; /* Dark background */
+            color: #e0e0e0; /* Light text for body */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .main-container {
+            display: flex;
+            justify-content: space-between; /* Change to space-between */
+            align-items: flex-start;
+            width: 95vw;
+            height: 95vh;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #000000; /* Darker container background */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            border-radius: 10px;
+            border: 1px solid #000000;
+        }
+        .plot-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            flex: 1 1 auto; /* Allow grow and shrink */
+            margin: 0 15px; /* Add horizontal margin */
+        }
+        #myDiv {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .dropdown-container {
+            padding: 8px;
+            background-color: #000000;
+            border-radius: 5px;
+            color: #e0e0e0;
+        }
+        .side-list {
+            flex: 0 0 20%; /* Do not grow, do not shrink, basis 20% */
+            height: 90vh;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #141414; /* Dark side list background */
+            border-radius: 8px;
+            border: 1px solid #282828;
+        }
+        .side-list h2 {
+            font-size: 1.2em;
+            text-align: center;
+            margin-top: 0;
+            color: #e0e0e0; /* Light text */
+        }
+        .side-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .side-list li {
+            font-size: 0.9em;
+            padding: 8px;
+            border-bottom: 1px solid #646464; /* Darker border */
+            cursor: help;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #ccc; /* Lighter text for list items */
+        }
+        .side-list li:last-child {
+            border-bottom: none;
+        }
+        .side-list li .score {
+            font-weight: bold;
+        }
+        .side-list li .date-span {
+            font-size: 0.8em;
+            color: #676767;
+            margin-left: 10px;
+            float: right;
+        }
+        #neg-list .score { color: #F44336; }
+        #pos-list .score { color: #4CAF50; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div id="neg-list" class="side-list">
+            <h2>Top 20 Negative</h2>
+            <ul></ul>
+        </div>
+
+        <div class="plot-container">
+            <div class="controls-container">
+                <h1>Sentiment Analysis 3D Scatter Plot</h1>
+                <div class="dropdown-container">
+                    <label for="limit-select">Select Data Limit:</label>
+                    <select id="limit-select">
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="1000" selected>1000</option>
+                        <option value="10000">10000</option>
+                        <option value="0">All</option>
+                    </select>
+                </div>
+            </div>
+            <div id="myDiv"></div>
+        </div>
+
+        <div id="pos-list" class="side-list">
+            <h2>Top 20 Positive</h2>
+            <ul></ul>
+        </div>
+    </div>
+
+    <script>
+        const limitSelect = document.getElementById('limit-select');
+
+        function fetchAndPlot(limit) {
+            const apiUrl = `http://localhost:8000/api/read_sentiment?limit=${limit}`;
+            
+            // Show loading state
+            Plotly.purge('myDiv');
+            document.getElementById('myDiv').innerHTML = '<p style="text-align: center; padding-top: 50px;">Loading data...</p>';
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // --- Plotly Chart ---
+                    const xData = data.map(item => item.neg);
+                    const yData = data.map(item => item.pos);
+                    const zData = data.map(item => item.neu);
+                    const textData = data.map(item => item.text);
+                    // Smooth gradient mix of Pos(green), Neg(red), Neu(yellow)
+                    const clamp01 = v => Math.max(0, Math.min(1, v || 0));
+                    const colorData = data.map(item => {
+                        let p = clamp01(item.pos), n = clamp01(item.neg), u = clamp01(item.neu);
+                        const sum = p + n + u || 1; // avoid divide by zero
+                        p /= sum; n /= sum; u /= sum;
+                        // Define base colors
+                        const green = {r: 76, g: 175, b: 80};     // #4CAF50
+                        const red   = {r: 244, g: 67,  b: 54};     // #F44336
+                        const yellow= {r: 255, g: 215, b: 0};      // #FFD700
+                        const r = Math.round(p*green.r + n*red.r + u*yellow.r);
+                        const g = Math.round(p*green.g + n*red.g + u*yellow.g);
+                        const b = Math.round(p*green.b + n*red.b + u*yellow.b);
+                        return `rgb(${r},${g},${b})`;
+                    });
+
+                    const trace1 = {
+                        x: xData, y: yData, z: zData,
+                        text: textData,
+                        hovertemplate: 'Negative: %{x:.6f}<br>Positive: %{y:.6f}<br>Neutral: %{z:.6f}<br>%{text}<extra></extra>',
+                        mode: 'markers',
+                        marker: {
+                            size: 5,
+                            color: colorData,
+                            showscale: false,
+                            opacity: 0.8
+                        },
+                        type: 'scatter3d'
+                    };
+
+                    const layout = {
+                        title: 'Sentiment (neg, pos, neu)',
+                        autosize: true,
+                        paper_bgcolor: '#1e1e1e',
+                        plot_bgcolor: '#1e1e1e',
+                        font: { color: '#e0e0e0' },
+                        margin: { l: 0, r: 0, b: 0, t: 40 },
+                        scene: {
+                            xaxis: {
+                                title: 'Negative',
+                                showgrid: false,
+                                showline: false,
+                                zeroline: false,
+                                ticks: '',
+                                showticklabels: false,
+                                showspikes: false,
+                                showbackground: false
+                            },
+                            yaxis: {
+                                title: 'Positive',
+                                showgrid: false,
+                                showline: false,
+                                zeroline: false,
+                                ticks: '',
+                                showticklabels: false,
+                                showspikes: false,
+                                showbackground: false
+                            },
+                            zaxis: {
+                                title: 'Neutral',
+                                showgrid: false,
+                                showline: false,
+                                zeroline: false,
+                                ticks: '',
+                                showticklabels: false,
+                                showspikes: false,
+                                showbackground: false
+                            },
+                            bgcolor: '#121212'
+                        }
+                    };
+
+                    Plotly.newPlot('myDiv', [trace1], layout);
+
+                    // Reverted: no focus mode or annotations
+
+                    // --- Top 5 Lists ---
+                    const populateList = (elementId, dataList, scoreField) => {
+                        const ul = document.querySelector(`${elementId} ul`);
+                        if (!ul) return;
+                        ul.innerHTML = ''; // Clear existing list
+                        
+                        dataList.forEach(item => {
+                            const li = document.createElement('li');
+                            
+                            // Create a detailed tooltip for the hover effect
+                            const tooltipText = `Text: ${item.text}\nDate: ${item.date}\nPositive: ${(item.pos * 100).toFixed(2)}%\nNeutral: ${(item.neu * 100).toFixed(2)}%\nNegative: ${(item.neg * 100).toFixed(2)}%`;
+                            li.title = tooltipText;
+                            
+                            const scoreSpan = document.createElement('span');
+                            scoreSpan.className = 'score';
+                            scoreSpan.textContent = `(${(item[scoreField] || 0).toFixed(3)}) `;
+                            
+                            const dateSpan = document.createElement('span');
+                            dateSpan.className = 'date-span';
+                            dateSpan.textContent = item.date ? new Date(item.date).toLocaleDateString() : '';
+
+                            li.appendChild(scoreSpan);
+                            li.append(item.text);
+                            li.appendChild(dateSpan);
+                            
+                            ul.appendChild(li);
+                        });
+                    };
+
+                    const sortedByNeg = [...data].sort((a, b) => (b.neg || 0) - (a.neg || 0));
+                    const top20Neg = sortedByNeg.slice(0, 20);
+
+                    const sortedByPos = [...data].sort((a, b) => (b.pos || 0) - (a.pos || 0));
+                    const top20Pos = sortedByPos.slice(0, 20);
+
+                    populateList('#neg-list', top20Neg, 'neg');
+                    populateList('#pos-list', top20Pos, 'pos');
+
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    document.getElementById('myDiv').innerHTML = `<p style='color: red; text-align: center;'>Error loading data from API. Please ensure the backend is running at http://localhost:8000. <br><br>Details: ${error.message}</p>`;
+                });
+        }
+
+        // Add event listener to the dropdown
+        limitSelect.addEventListener('change', (event) => {
+            fetchAndPlot(event.target.value);
+        });
+
+        // Initial plot load
+        fetchAndPlot(limitSelect.value);
+    </script>
+
+</body>
+</html>

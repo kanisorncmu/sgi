@@ -1,0 +1,3191 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentimental Geo Intelligence Platform - Advanced Geo-Intelligence</title>
+    
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles/app.css">
+    <style>
+        :root {
+            /* Colors */
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            
+            /* Sentiment Colors */
+            --red: #e53935;
+            --yellow: #fdd835;
+            --green: #43a047;
+            --positive: #43a047;
+            --neutral: #fdd835;
+            --negative: #e53935;
+            
+            /* Dark Theme */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            
+            /* Glass Effects */
+            --glass-bg: rgba(24, 39, 63, 0.7);
+            --glass-border: rgba(84, 102, 126, 0.2);
+            --glass-shadow: 0 25px 50px -12px rgba(27, 26, 50, 0.25);
+            
+            /* Map specific */
+            --primary-glow: #00aaff;
+            --bg-gradient: linear-gradient(135deg, #10101a, #1a1a2e);
+            --border-color: rgba(150, 150, 180, .2);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, .37);
+            --border-radius-lg: 16px;
+            --border-radius-md: 10px;
+            --font-family: 'Poppins', sans-serif;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            /* Border Radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+            
+            /* Typography */
+            --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-poppins: 'Poppins', sans-serif;
+            --font-thai: 'Noto Sans Thai', sans-serif;
+            
+            /* Transitions */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-inter);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ==== NAVIGATION ==== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .navbar.scrolled {
+            background: rgba(15, 23, 42, 0.95);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xl);
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-family: var(--font-thai);
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--text-primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+            font-family: var(--font-thai);
+            cursor: pointer;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(37, 99, 235, 0.5);
+        }
+
+        /* ==== PAGE SECTIONS ==== */
+        .page-section {
+            min-height: 100vh;
+            padding-top: 70px;
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        /* ==== DEEP ANALYSIS IFRAME SECTION ==== */
+        .deep-analysis-section {
+            height: 100vh;
+            padding-top: 20px;
+            position: relative;
+            background: var(--bg-primary);
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: calc(100vh - 70px);
+            min-height: 500px;
+            position: relative;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 0;
+            box-shadow: var(--glass-shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .iframe-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            font-family: var(--font-thai);
+            z-index: 1000;
+        }
+
+        .deep-analysis-iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            border: none;
+            border-radius: var(--radius-lg);
+            background: white;
+            flex: 1;
+            display: block;
+        }
+
+        .iframe-error {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-secondary);
+            font-family: var(--font-thai);
+            z-index: 1001;
+        }
+
+        .iframe-error h3 {
+            color: var(--error);
+            margin-bottom: var(--spacing-md);
+        }
+
+        /* ==== BACKGROUND IMAGE ==== */
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0.1;
+        }
+
+        .background-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ==== LANDING PAGE ==== */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.2) 0%, transparent 50%);
+            animation: heroGradient 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes heroGradient {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+            padding: 0 var(--spacing-lg);
+            z-index: 10;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: var(--spacing-lg);
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-2xl);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            font-family: var(--font-thai);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: var(--spacing-lg);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: var(--spacing-md) var(--spacing-xl);
+            border-radius: var(--radius-xl);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            box-shadow: 0 10px 25px 0 rgba(37, 99, 235, 0.4);
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-thai);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px 0 rgba(37, 99, 235, 0.6);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            padding: var(--spacing-md) var(--spacing-xl);
+            border-radius: var(--radius-xl);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            border: 1px solid var(--glass-border);
+            font-family: var(--font-thai);
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        /* ==== FEATURES SECTION ==== */
+        .features {
+            padding: var(--spacing-2xl) var(--spacing-lg);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-2xl);
+        }
+
+        .feature-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(37, 99, 235, 0.3);
+            box-shadow: 0 20px 40px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-family: var(--font-thai);
+        }
+
+        /* ==== DASHBOARD STYLES ==== */
+        .dashboard {
+            padding: var(--spacing-xl);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            flex-wrap: wrap;
+            gap: var(--spacing-lg);
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: var(--spacing-xs);
+            font-family: var(--font-thai);
+        }
+
+        /* Date selector and today info */
+        .dashboard-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background: var(--glass-bg);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--glass-border);
+        }
+
+        .date-selector select {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+            font-family: var(--font-thai);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .date-selector select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .today-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            background: var(--glass-bg);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--glass-border);
+            
+        }
+        .today-info {
+        display: none;
+        }
+
+        .today-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-family: var(--font-thai);
+        }
+
+        .today-date {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+            font-family: var(--font-thai);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: var(--spacing-lg);
+        }
+
+        .dashboard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            transition: var(--transition);
+        }
+
+        .dashboard-card:hover {
+            border-color: rgba(37, 99, 235, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-primary);
+            font-family: var(--font-thai);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: flex;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+            grid-column: span 12;
+        }
+
+        .kpi-card {
+            flex: 1;
+            min-width: 200px;
+            height: 200px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(37, 99, 235, 0.3);
+        }
+
+        /* Chart containers */
+        .chart-container {
+            height: 350px;
+            width: 100%;
+        }
+
+        .map-container {
+            height: 500px;
+            width: 100%;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: flex;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+            grid-column: span 12;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+        }
+
+        .stat-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+            font-family: var(--font-thai);
+        }
+
+        .stat-content {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-family: var(--font-thai);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: var(--spacing-lg);
+            align-items: center;
+            margin-top: var(--spacing-md);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.positive { background: var(--positive); }
+        .legend-dot.neutral { background: var(--neutral); }
+        .legend-dot.negative { background: var(--negative); }
+
+        /* ==== MAP STYLES ==== */
+        .map-page {
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            font-family: var(--font-poppins);
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+        }
+
+        .map-full {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1;
+        }
+
+        .map-leaders {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+            overflow: visible;
+        }
+
+        .leader svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .leader svg line {
+            stroke: #fff;
+            stroke-width: 2px;
+            opacity: .8;
+            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8));
+        }
+
+        /* Connection lines animation */
+        .connection-line {
+            animation: connectionPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes connectionPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Leader lines animation */
+        .leader-line {
+            animation: leaderPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes leaderPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .map-ui-panel {
+            position: absolute;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            transition: all .4s cubic-bezier(.165, .84, .44, 1);
+        }
+
+        .map-header {
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: .75rem 2rem;
+        }
+
+        .map-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0;
+            color: #fff;
+        }
+
+        .map-controls {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: .5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            gap: .5rem;
+        }
+
+        .control-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: .5rem 1rem;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: all .2s;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        .control-btn:hover {
+            color: #fff;
+            background: rgba(0, 170, 255, .2);
+        }
+
+        .control-btn.active {
+            color: #fff;
+            background: rgba(0, 170, 255, .4);
+            border-color: var(--primary-glow);
+        }
+
+        /* Map Date Selector */
+        .map-date-selector {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background: var(--glass-bg);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--glass-border);
+        }
+
+        .map-date-selector select {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+            font-family: var(--font-thai);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .map-date-selector select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .side-panel {
+            top: 20px;
+            bottom: 20px;
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+
+        .side-panel.left {
+            left: -390px;
+            transition: left var(--transition);
+        }
+
+        .side-panel.left.open {
+            left: 20px;
+        }
+
+        .side-panel.right {
+            right: -390px;
+            transition: right var(--transition);
+        }
+
+        .side-panel.right.open {
+            right: 20px;
+        }
+
+        .panel-toggle {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 25px;
+            height: 80px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-secondary);
+            transition: all .2s;
+        }
+
+        .panel-toggle:hover {
+            color: #fff;
+            background: rgba(0, 170, 255, .2);
+        }
+
+        .panel-toggle.left {
+            left: 100%;
+            border-left: none;
+            border-top-right-radius: var(--border-radius-md);
+            border-bottom-right-radius: var(--border-radius-md);
+        }
+
+        .panel-toggle.right {
+            right: 100%;
+            border-right: none;
+            border-top-left-radius: var(--border-radius-md);
+            border-bottom-left-radius: var(--border-radius-md);
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            font-family: var(--font-thai);
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .callout {
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
+            background: rgba(0, 0, 0, .3);
+            cursor: pointer;
+            transition: background-color .2s, border-color .2s;
+            margin-bottom: 1rem;
+            font-family: var(--font-thai);
+        }
+
+        .callout:hover {
+            background: rgba(0, 170, 255, .2);
+            border-color: rgba(0, 170, 255, .5);
+        }
+
+        .callout-title {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .callout-meta {
+            font-size: .85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .callout-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .callout-total {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .stat-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-item h4 {
+            margin: 0 0 .25rem 0;
+            font-weight: 300;
+            color: var(--text-secondary);
+            font-family: var(--font-thai);
+        }
+
+        .stat-item .value {
+            font-size: 1.25rem;
+            font-weight: 500;
+            font-family: var(--font-thai);
+        }
+
+        .pie-chart-container {
+            width: 100%;
+            height: 250px;
+        }
+
+        /* ==== CUSTOM MAP POPUP ==== */
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .custom-popup .leaflet-popup-content {
+            margin: 0;
+            padding: 0;
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: white;
+        }
+
+        /* ==== LOCATION LABELS ==== */
+        .location-label {
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .location-label div {
+            animation: labelFadeIn 0.5s ease-out;
+        }
+
+        @keyframes labelFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ==== ABOUT PAGE ==== */
+        .about-page {
+            padding: var(--spacing-xl);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .about-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .about-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .about-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-family: var(--font-thai);
+        }
+
+        .emotion-wheel-container {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .emotion-wheel {
+            max-width: 500px;
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .sentiment-classes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-xl);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .sentiment-class {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            transition: var(--transition);
+        }
+
+        .sentiment-class:hover {
+            transform: translateY(-5px);
+            border-color: rgba(37, 99, 235, 0.3);
+            box-shadow: 0 20px 40px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .sentiment-class.positive {
+            border-left: 4px solid var(--positive);
+        }
+
+        .sentiment-class.neutral {
+            border-left: 4px solid var(--neutral);
+        }
+
+        .sentiment-class.negative {
+            border-left: 4px solid var(--negative);
+        }
+
+        .class-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+            font-family: var(--font-thai);
+        }
+
+        .class-description {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.7;
+            font-family: var(--font-thai);
+        }
+
+        .class-examples {
+            background: rgba(0, 0, 0, 0.2);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--accent);
+        }
+
+        .examples-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+            font-family: var(--font-thai);
+        }
+
+        .examples-list {
+            font-style: italic;
+            color: var(--text-secondary);
+            font-family: var(--font-thai);
+            line-height: 1.6;
+        }
+
+        .credits {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            text-align: center;
+        }
+
+        .credits-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-thai);
+        }
+
+        .credits-content {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-family: var(--font-thai);
+        }
+
+        /* ==== POPUP MODAL ==== */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: auto;
+            position: relative;
+            border: 1px solid var(--glass-border);
+        }
+
+        .popup-close {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 2rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .popup-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .popup-image {
+            width: 60%;
+            height: auto;
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-md);
+            margin-left: auto ;
+            margin-right: auto;
+            display: block;
+        }
+
+        .popup-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+            text-align: center;
+            font-family: var(--font-thai);
+        }
+
+        .popup-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-family: var(--font-thai);
+        }
+
+        /* ==== RESPONSIVE ==== */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dashboard-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid,
+            .stats-grid {
+                flex-direction: column;
+            }
+
+            .side-panel {
+                width: 90vw;
+            }
+
+            .side-panel.left {
+                left: -95vw;
+            }
+
+            .side-panel.left.open {
+                left: 5vw;
+            }
+
+            .side-panel.right {
+                right: -95vw;
+            }
+
+            .side-panel.right.open {
+                right: 5vw;
+            }
+
+            .sentiment-classes {
+                grid-template-columns: 1fr;
+            }
+
+            .iframe-container {
+                height: calc(100vh - 70px);
+                margin: 0;
+                border-radius: 0;
+                min-height: calc(100vh - 70px);
+            }
+
+            .deep-analysis-iframe {
+                border-radius: 0;
+                min-height: calc(100vh - 70px);
+            }
+        }
+
+        /* ==== ANIMATIONS ==== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        /* Hover Preview */
+        .hover-preview {
+            display: none;
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            box-shadow: var(--glass-shadow);
+            width: 200px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .hover-preview img {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-sm);
+            object-fit: cover;
+        }
+
+        .hover-preview-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+            font-family: var(--font-thai);
+        }
+
+        .hover-preview-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-family: var(--font-thai);
+            line-height: 1.4;
+        }
+
+        .kpi-card:hover .hover-preview {
+            display: block;
+        }
+
+        .kpi-card {
+            position: relative; /* เพิ่มบรรทัดนี้ */
+        }
+        
+    </style>
+    <!-- Externalized styles -->
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/map.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+    <!-- Background Image -->
+    <div class="background-image" id="background-image">
+        <img src="sentiment_backgrond.jpg" alt="Background" />
+    </div>
+
+    <!-- Popup Modal -->
+    <div class="popup-overlay" id="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closePopup()">&times;</button>
+            <img class="popup-image" id="popup-image" src="" alt="Emotion">
+            <div class="popup-title" id="popup-title"></div>
+            <div class="popup-description" id="popup-description"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo" onclick="showPage('landing')">
+                <div class="logo-icon">S</div>
+                <span>Sentimental Geo Intelligence</span>
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active" onclick="showPage('landing')">Home</a></li>
+                <li><a href="#" class="nav-link" onclick="showPage('dashboard')">Dashboard</a></li>
+                <li><a href="#" class="nav-link" onclick="showPage('deep-analysis')">Deep Analysis</a></li>
+                <li><a href="#" class="nav-link" onclick="showPage('map')">Map Analytics</a></li>
+                <li><a href="#" class="nav-link" onclick="showPage('tutorial')">How to use</a></li>
+                <li><a href="#" class="nav-link" onclick="showPage('about')">About</a></li>
+            </ul>
+            
+            <a href="#" class="nav-cta" onclick="showPage('dashboard')">START</a>
+        </div>
+    </nav>
+
+    <!-- Landing Page -->
+    <section id="landing-page" class="page-section active">
+        <div class="hero">
+            <div class="hero-content fade-in-up">
+                <h1 class="hero-title">Sentimental Geo Intelligence</h1>
+                <!-- <p class="hero-subtitle">
+                    วิเคราะห์ความรู้สึกและอารมณ์จากข้อมูลภูมิศาสตร์แบบเรียลไทม์ 
+                    ด้วยเทคโนโลยี AI และการแสดงผลที่ทันสมัย
+                </p> -->
+                <div class="hero-buttons">
+                    <button class="btn-primary" onclick="showPage('dashboard')">
+                        START
+                    </button>
+                    <button class="btn-secondary" onclick="showPage('map')">
+                        Map Analytics
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- <div class="features">
+            <div class="features-grid">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Real-time Dashboard</h3>
+                    <p class="feature-description">
+                        ติดตามและวิเคราะห์ความรู้สึกของข้อมูลแบบเรียลไทม์ 
+                        ด้วยกราฟและตัวชี้วัดที่ครบถ้วน
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">🗺️</div>
+                    <h3 class="feature-title">Geo-Intelligence Mapping</h3>
+                    <p class="feature-description">
+                        แสดงผลข้อมูลความรู้สึกบนแผนที่แบบโต้ตอบได้ 
+                        พร้อมระบบ Heatmap และ Circle Visualization
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI-Powered Analytics</h3>
+                    <p class="feature-description">
+                        ใช้เทคโนโลยี Machine Learning ในการวิเคราะห์ 
+                        และจำแนกความรู้สึกจากข้อมูลอย่างแม่นยำ
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📈</div>
+                    <h3 class="feature-title">Trend Analysis</h3>
+                    <p class="feature-description">
+                        วิเคราะห์แนวโน้มความรู้สึกตามช่วงเวลา 
+                        และสถานที่เพื่อการตัดสินใจที่มีประสิทธิภาพ
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📚</div>
+                    <h3 class="feature-title">วิธีการใช้งาน</h3>
+                    <p class="feature-description">
+                        คู่มือการใช้งานระบบแบบ Step-by-Step พร้อมตัวอย่างการวิเคราะห์
+                        และเทคนิคการตีความข้อมูลสำหรับผู้ใช้ทุกระดับ
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">High Performance</h3>
+                    <p class="feature-description">
+                        ระบบประมวลผลความเร็วสูง รองรับข้อมูลขนาดใหญ่ 
+                        และการแสดงผลแบบเรียลไทม์
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Secure & Reliable</h3>
+                    <p class="feature-description">
+                        ความปลอดภัยระดับองค์กร การสำรองข้อมูล 
+                        และระบบการเข้าถึงที่มีความน่าเชื่อถือสูง
+                    </p>
+                </div>
+            </div>
+        </div> -->
+    </section>
+
+    <!-- Dashboard Page -->
+    <section id="dashboard-page" class="page-section">
+        <div class="dashboard">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">Sentimental Geo‑Dashboard </h1>
+                    <div class="dashboard-subtitle">ข้อมูลประจำวัน • Today's Data • อัปเดต <span id="current-datetime"></span></div>
+                </div>
+                <div class="dashboard-controls">
+                    <div class="date-selector">
+                        <span class="today-label">เลือกวันที่:</span>
+                        <select id="date-selector" onchange="onDateChange()">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="today-info">
+                        <span class="today-label">วันที่:</span>
+                        <span class="today-date" id="today-display"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card" onclick="showSentimentPopup('positive')">
+                        <div id="gauge_positive" style="width: 100%; height: 100%;"></div>
+                        <div class="hover-preview">
+                            <img src="Positive.jpg" alt="Positive">
+                            <div class="hover-preview-title">อารมณ์ที่น่าพึงพอใจ</div>
+                            <div class="hover-preview-desc">อารมณ์เชิงบวก ความสุข ความพึงพอใจ</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card" onclick="showSentimentPopup('neutral')">
+                        <div id="gauge_neutral" style="width: 100%; height: 100%;"></div>
+                        <div class="hover-preview">
+                            <img src="Neutral.jpg" alt="Neutral">
+                            <div class="hover-preview-title">อารมณ์เป็นกลาง</div>
+                            <div class="hover-preview-desc">ข้อมูล ข้อเท็จจริง ไม่มีอารมณ์เด่นชัด</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card" onclick="showSentimentPopup('negative')">
+                        <div id="gauge_negative" style="width: 100%; height: 100%;"></div>
+                        <div class="hover-preview">
+                            <img src="Negative.jpg" alt="Negative">
+                            <div class="hover-preview-title">อารมณ์ที่ไม่น่าพึงพอใจ</div>
+                            <div class="hover-preview-desc">อารมณ์เชิงลบ ความโกรธ ความผิดหวัง</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div style="grid-column: span 12;">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-dot positive"></div>
+                            <span>Positive</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot neutral"></div>
+                            <span>Neutral</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot negative"></div>
+                            <span>Negative</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Series Chart -->
+                <div class="dashboard-card" style="grid-column: span 6;">
+                    <h3 class="card-title">แนวโน้มรายวัน (29 วัน)</h3>
+                    <div id="timeseries_chart" class="chart-container"></div>
+                </div>
+
+                <!-- Pie Chart -->
+                <div class="dashboard-card" style="grid-column: span 6;">
+                    <h3 class="card-title">สัดส่วนอารมณ์ — <span id="selected-date-display">วันนี้</span></h3>
+                    <div id="pie_chart" class="chart-container"></div>
+                </div>
+
+                <!-- Map -->
+                <div class="dashboard-card" style="grid-column: span 12; position: relative;">
+                    <h3 class="card-title">แผนที่ตามวัน (วงกลมใหญ่ = ข้อความมาก, สี = อารมณ์เด่น)</h3>
+                    <div style="display:flex; gap:8px; margin-bottom:10px;">
+                        <button id="db_btn_circles" class="btn-secondary">Circles</button>
+                        <button id="db_btn_heatmap" class="btn-secondary">Heatmap</button>
+                    </div>
+                    <div id="dashboard_map" class="map-container"></div>
+                    <div id="dashboard_legend" style="margin-top:10px; display:flex; gap:16px; align-items:center; color:#cbd5e1;">
+                        <div style="display:flex; align-items:center; gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background: var(--green);"></span>Positive</div>
+                        <div style="display:flex; align-items:center; gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background: var(--yellow);"></span>Neutral</div>
+                        <div style="display:flex; align-items:center; gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background: var(--red);"></span>Negative</div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4 class="stat-title">Top วันรวมข้อความมากสุด</h4>
+                        <div id="stat_top_total" class="stat-content"></div>
+                    </div>
+                    <div class="stat-card">
+                        <h4 class="stat-title">Top วันเชิงลบมากสุด</h4>
+                        <div id="stat_top_negative" class="stat-content"></div>
+                    </div>
+                    <div class="stat-card">
+                        <h4 class="stat-title">รวมทั้งช่วง</h4>
+                        <div class="stat-content">
+                            Positive: <strong style="color: var(--positive)" id="sum_positive"></strong> •
+                            Neutral: <strong style="color: var(--neutral)" id="sum_neutral"></strong> •
+                            Negative: <strong style="color: var(--negative)" id="sum_negative"></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deep Analysis Page with Iframe -->
+    <section id="deep-analysis-page" class="page-section">
+        <div class="deep-analysis-section">
+            <div class="iframe-container">
+                <div class="iframe-loading" id="iframe-loading">
+                    กำลังโหลด Deep Analysis...
+                </div>
+                <div class="iframe-error" id="iframe-error">
+                    <h3>ไม่สามารถโหลดหน้า Deep Analysis ได้</h3>
+                    <p>กรุณาตรวจสอบว่าไฟล์ deep_analysis.html อยู่ในโฟลเดอร์เดียวกัน</p>
+                </div>
+                <iframe 
+                    id="deep-analysis-iframe" 
+                    class="deep-analysis-iframe"
+                    src="deep_analysis.html"
+                    title="Deep Analysis"
+                    sandbox="allow-scripts allow-same-origin"
+                    loading="lazy">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Page -->
+    <section id="map-page" class="page-section">
+        <div class="map-page">
+            <div id="full_map" class="map-full"></div>
+            <div id="map_leaders" class="map-leaders"></div>
+
+            <!-- Map Header -->
+            <header class="map-ui-panel map-header">
+                <h1 class="map-title">Project Aether</h1>
+                <div class="map-date-selector">
+                    <span class="today-label">เลือกวันที่:</span>
+                    <select id="map-date-selector" onchange="onMapDateChange()">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="today-info">
+                    <span class="today-label">วันที่:</span>
+                    <span class="today-date" id="map-today-display"></span>
+                </div>
+            </header>
+
+            <!-- Left Panel -->
+            <aside id="map_left_panel" class="map-ui-panel side-panel left">
+                <div id="map_left_toggle" class="panel-toggle left">&lt;</div>
+                <div class="panel-header">
+                    <h2 class="panel-title">ข้อมูลสรุป</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="stat-item">
+                        <h4>Top วันที่มีข้อความรวมมากที่สุด</h4>
+                        <div id="map_stat_total" class="value"></div>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Top วันที่มีข้อความเชิงลบมากที่สุด</h4>
+                        <div id="map_stat_negative" class="value"></div>
+                    </div>
+                    <div class="stat-item">
+                        <h4>สัดส่วนความคิดเห็นรายวัน</h4>
+                        <div id="map_pie_chart" class="pie-chart-container"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Right Panel -->
+            <aside id="map_right_panel" class="map-ui-panel side-panel right">
+                <div id="map_right_toggle" class="panel-toggle right">&gt;</div>
+                <div class="panel-header">
+                    <h2 id="map_callouts_title" class="panel-title">สถานที่ทั้งหมด</h2>
+                </div>
+                <div class="panel-content" id="map_callouts_list"></div>
+            </aside>
+
+            <!-- Map Controls -->
+            <div class="map-ui-panel map-controls">
+                <div class="control-group">
+                    <button id="btn_circles" class="control-btn active">Circle View</button>
+                    <button id="btn_heatmap" class="control-btn">Heatmap View</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tutorial Page -->
+    <section id="tutorial-page" class="page-section">
+        <div class="about-page">
+            <div class="about-header">
+                <h1 class="about-title">คู่มือการใช้งานระบบ</h1>
+                <p class="about-subtitle">วิธีการใช้งาน Sentimental Geo Intelligence Platform แบบ Step-by-Step</p>
+            </div>
+
+            <div class="sentiment-classes">
+                <div class="sentiment-class positive">
+                    <h3 class="class-title">ขั้นตอนที่ 1: เริ่มต้นใช้งาน</h3>
+                    <p class="class-description">
+                        คลิกปุ่ม "START" หรือ "Dashboard" เพื่อเข้าสู่หน้าแดชบอร์ดหลัก 
+                        ระบบจะแสดงข้อมูลความรู้สึกของวันปัจจุบันทันที
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">สิ่งที่คุณจะเห็น:</div>
+                        <div class="examples-list">
+                            • กราฟวงกลม (Gauge Charts) แสดงสัดส่วนอารมณ์แต่ละประเภท<br>
+                            • แผนภูมิเส้นแสดงแนวโน้ม 29 วันที่ผ่านมา<br>
+                            • แผนที่แสดงการกระจายตัวของข้อมูลตามพื้นที่<br>
+                            • สถิติสรุปและข้อมูลเปรียบเทียบ
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-class neutral">
+                    <h3 class="class-title">ขั้นตอนที่ 2: เลือกข้อมูลตามวัน</h3>
+                    <p class="class-description">
+                        ใช้เครื่องมือเลือกวันที่มุมบนขวาของหน้าแดชบอร์ด 
+                        เพื่อดูข้อมูลของวันที่สนใจ ระบบจะอัปเดตทุกกราฟทันที
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">คำแนะนำการใช้งาน:</div>
+                        <div class="examples-list">
+                            • คลิกที่กราฟวงกลมเพื่อดูรายละเอียดของแต่ละอารมณ์<br>
+                            • สังเกตสีของกราฟ: เขียว = บวก, เหลือง = กลาง, แดง = ลบ<br>
+                            • ใช้แผนภูมิเส้นเพื่อเปรียบเทียบแนวโน้มข้ามวัน<br>
+                            • คลิกที่จุดบนแผนที่เพื่อดูรายละเอียดแต่ละจังหวัด
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-class negative">
+                    <h3 class="class-title">ขั้นตอนที่ 3: วิเคราะห์แผนที่</h3>
+                    <p class="class-description">
+                        เข้าสู่หน้า "Map Analytics" เพื่อดูการแสดงผลแบบโต้ตอบ 
+                        พร้อมฟีเจอร์เปลี่ยนมุมมองและข้อมูลรายละเอียด
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">ฟีเจอร์ที่สำคัญ:</div>
+                        <div class="examples-list">
+                            • สลับระหว่าง Circle View และ Heatmap View<br>
+                            • แผงข้อมูลด้านซ้าย: สถิติสรุปและกราฟวงกลม<br>
+                            • แผงข้อมูลด้านขวา: รายชื่อสถานที่พร้อมลิงค์<br>
+                            • เครื่องมือเลือกวันที่ด้านบนแผนที่<br>
+                            • คลิกจุดบนแผนที่เพื่อดูรายละเอียด
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-class positive">
+                    <h3 class="class-title">ขั้นตอนที่ 4: การตีความข้อมูล</h3>
+                    <p class="class-description">
+                        เข้าใจความหมายของสี การอ่านกราฟ และการใช้ข้อมูล
+                        เพื่อการวิเคราะห์และตัดสินใจที่มีประสิทธิภาพ
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">เทคนิคการตีความ:</div>
+                        <div class="examples-list">
+                            • วงกลมใหญ่ = ข้อมูลมาก, วงกลมเล็ก = ข้อมูลน้อย<br>
+                            • สีแดงเด่น = ความรู้สึกเชิงลบสูง<br>
+                            • เปรียบเทียบแนวโน้มระหว่างวันเพื่อหาความผิดปกติ<br>
+                            • ใช้ข้อมูลสถิติด้านล่างเพื่อการวิเคราะห์เชิงลึก
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-class neutral">
+                    <h3 class="class-title">ขั้นตอนที่ 5: Deep Analysis</h3>
+                    <p class="class-description">
+                        เข้าสู่หน้า "Deep Analysis" เพื่อดูการวิเคราะห์เชิงลึก
+                        พร้อมเครื่องมือขั้นสูงและรายงานโดยละเอียด
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">ฟีเจอร์ขั้นสูง:</div>
+                        <div class="examples-list">
+                            • การวิเคราะห์เชิงลึกด้วย AI<br>
+                            • รายงานแนวโน้มและคาดการณ์<br>
+                            • เครื่องมือเปรียบเทียบข้อมูลหลายมิติ<br>
+                            • ส่งออกข้อมูลและรายงานในรูปแบบต่างๆ
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-class positive">
+                    <h3 class="class-title">ขั้นตอนที่ 6: เคล็ดลับการใช้งาน</h3>
+                    <p class="class-description">
+                        เทคนิคและคำแนะนำสำหรับการใช้งานอย่างมีประสิทธิภาพ
+                        รวมถึงการบำรุงรักษาและการแก้ปัญหาเบื้องต้น
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">เคล็ดลับที่ควรรู้:</div>
+                        <div class="examples-list">
+                            • รีเฟรชหน้าเว็บหากกราฟไม่อัปเดต<br>
+                            • ใช้คีย์บอร์ด Escape เพื่อปิดหน้าต่าง popup<br>
+                            • แผนที่รองรับการซูมและลากเพื่อเปลี่ยนมุมมอง<br>
+                            • สามารถเปิดหลายแท็บเพื่อเปรียบเทียบข้อมูล
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Page -->
+    <section id="about-page" class="page-section">
+        <div class="about-page">
+            <div class="about-header">
+                <h1 class="about-title">เกี่ยวกับระบบ Sentimental Geo Intelligence</h1>
+                <p class="about-subtitle">ระบบวิเคราะห์อารมณ์และความรู้สึกทางภูมิศาสตร์ เพื่อสะท้อนความรู้สึกสังคมไทยในข่าวรายวัน</p>
+            </div>
+
+            <div class="emotion-wheel-container">
+                <img class="emotion-wheel" src="Cycle_selminder.png" alt="วงล้ออารมณ์" />
+                <h3 class="card-title">วงล้ออารมณ์ (Emotion Wheel)</h3>
+                <p class="class-description">
+                    อ้างอิง : <a href="https://selminder.com/" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none;">https://selminder.com/</a>
+                </p>
+            </div>
+
+            <div class="sentiment-classes">
+                <div class="sentiment-class positive">
+                    <h3 class="class-title">1. น่าพึงพอใจ (Positive / Pleasant)</h3>
+                    <p class="class-description">
+                        อารมณ์เชิงบวก เช่น ดีใจ, พอใจ, ชื่นชม, หัวเราะ, ให้กำลังใจ รวมถึงความรู้สึกที่แสดงถึงการสนับสนุน การยอมรับ หรือความพึงพอใจต่อเหตุการณ์ต่างๆ
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">ตัวอย่าง:</div>
+                        <div class="examples-list">
+                            "รัฐบาลจัดงานดีมาก ภูมิใจแทนคนไทยเลย"<br>
+                            "สุดยอดดดด 👏👏"<br>
+                            "เก่งมากครับ ชื่นชมจริงๆ"<br>
+                            "ดีใจที่ได้เห็นความก้าวหน้า"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-class neutral">
+                    <h3 class="class-title">2. เป็นกลาง (Neutral)</h3>
+                    <p class="class-description">
+                        ข้อความที่ไม่แสดงอารมณ์ชัด หรือเป็นแค่ข้อมูล/ข้อเท็จจริง การแจ้งข่าวสาร การสอบถาม หรือการแสดงความคิดเห็นที่ไม่มีอารมณ์เด่นชัด
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">ตัวอย่าง:</div>
+                        <div class="examples-list">
+                            "ข่าวนี้ออกตอนเช้าแล้วครับ"<br>
+                            "วันนี้ฝนตกหนักที่กรุงเทพฯ"<br>
+                            "การประชุมจะเริ่มตอน 14:00 น."<br>
+                            "มีใครรู้รายละเอียดเพิ่มเติมไหม"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-class negative">
+                    <h3 class="class-title">3. ไม่น่าพึงพอใจ (Negative / Unpleasant)</h3>
+                    <p class="class-description">
+                        อารมณ์เชิงลบ เช่น โกรธ, ด่า, ประชด, กังวล, เสียใจ รวมถึงการแสดงความไม่พอใจ การวิพากษ์วิจารณ์ หรือความรู้สึกผิดหวัง
+                    </p>
+                    <div class="class-examples">
+                        <div class="examples-title">ตัวอย่าง:</div>
+                        <div class="examples-list">
+                            "พูดแบบนี้ไม่เคารพประชาชนเลย"<br>
+                            "ห่วยมาก ทำงานชุ่ยสุดๆ"<br>
+                            "ผิดหวังจริงๆ คิดว่าจะดีกว่านี้"<br>
+                            "เสียเวลาไปฟังเปล่าๆ"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script type="module">
+        import { formatDateThai, getCurrentDateTime, getTodayDate } from './src/services/date.js';
+        import { THEME_COLORS, MAP_DEFAULTS } from './src/config/constants.js';
+        // ========================= DATA =========================
+        const DATA = {"dates": ["2025-07-24", "2025-07-25", "2025-07-26", "2025-07-27", "2025-07-28", "2025-07-29", "2025-07-30", "2025-07-31", "2025-08-01", "2025-08-02", "2025-08-03", "2025-08-04", "2025-08-05", "2025-08-06", "2025-08-07", "2025-08-08", "2025-08-09", "2025-08-10", "2025-08-11", "2025-08-12", "2025-08-13", "2025-08-14", "2025-08-15", "2025-08-16", "2025-08-17", "2025-08-18", "2025-08-19", "2025-08-20", "2025-08-21"], "series": {"negative": [4936, 4382, 6258, 3638, 7173, 4496, 4242, 5252, 660, 2020, 2651, 4146, 2129, 3125, 3112, 1676, 2521, 2810, 3186, 6470, 4343, 5863, 4391, 3384, 6195, 3585, 3114, 1806, 693], "neutral": [1522, 1579, 1928, 1293, 2169, 1421, 1565, 1568, 276, 820, 1199, 1798, 910, 1250, 1429, 836, 1088, 1093, 1598, 1886, 1589, 2463, 1408, 1213, 2397, 1441, 1424, 878, 259], "positive": [1503, 1783, 2792, 1516, 893, 1170, 968, 870, 344, 788, 504, 959, 688, 1195, 1189, 548, 979, 671, 1748, 1260, 1067, 1593, 1045, 680, 1056, 1169, 669, 364, 194]}, "overall": {"totals": {"negative": 108257, "neutral": 40300, "positive": 30205}, "perc": {"negative": 60.56, "neutral": 22.54, "positive": 16.9}}, "byDate": {"2025-07-24": {"negative": 4936, "neutral": 1522, "positive": 1503, "total": 7961}, "2025-07-25": {"negative": 4382, "neutral": 1579, "positive": 1783, "total": 7744}, "2025-07-26": {"negative": 6258, "neutral": 1928, "positive": 2792, "total": 10978}, "2025-07-27": {"negative": 3638, "neutral": 1293, "positive": 1516, "total": 6447}, "2025-07-28": {"negative": 7173, "neutral": 2169, "positive": 893, "total": 10235}, "2025-07-29": {"negative": 4496, "neutral": 1421, "positive": 1170, "total": 7087}, "2025-07-30": {"negative": 4242, "neutral": 1565, "positive": 968, "total": 6775}, "2025-07-31": {"negative": 5252, "neutral": 1568, "positive": 870, "total": 7690}, "2025-08-01": {"negative": 660, "neutral": 276, "positive": 344, "total": 1280}, "2025-08-02": {"negative": 2020, "neutral": 820, "positive": 788, "total": 3628}, "2025-08-03": {"negative": 2651, "neutral": 1199, "positive": 504, "total": 4354}, "2025-08-04": {"negative": 4146, "neutral": 1798, "positive": 959, "total": 6903}, "2025-08-05": {"negative": 2129, "neutral": 910, "positive": 688, "total": 3727}, "2025-08-06": {"negative": 3125, "neutral": 1250, "positive": 1195, "total": 5570}, "2025-08-07": {"negative": 3112, "neutral": 1429, "positive": 1189, "total": 5730}, "2025-08-08": {"negative": 1676, "neutral": 836, "positive": 548, "total": 3060}, "2025-08-09": {"negative": 2521, "neutral": 1088, "positive": 979, "total": 4588}, "2025-08-10": {"negative": 2810, "neutral": 1093, "positive": 671, "total": 4574}, "2025-08-11": {"negative": 3186, "neutral": 1598, "positive": 1748, "total": 6532}, "2025-08-12": {"negative": 6470, "neutral": 1886, "positive": 1260, "total": 9616}, "2025-08-13": {"negative": 4343, "neutral": 1589, "positive": 1067, "total": 6999}, "2025-08-14": {"negative": 5863, "neutral": 2463, "positive": 1593, "total": 9919}, "2025-08-15": {"negative": 4391, "neutral": 1408, "positive": 1045, "total": 6844}, "2025-08-16": {"negative": 3384, "neutral": 1213, "positive": 680, "total": 5277}, "2025-08-17": {"negative": 6195, "neutral": 2397, "positive": 1056, "total": 9648}, "2025-08-18": {"negative": 3585, "neutral": 1441, "positive": 1169, "total": 6195}, "2025-08-19": {"negative": 3114, "neutral": 1424, "positive": 669, "total": 5207}, "2025-08-20": {"negative": 1806, "neutral": 878, "positive": 364, "total": 3048}, "2025-08-21": {"negative": 693, "neutral": 259, "positive": 194, "total": 1146}}, "markersByDate": {"2025-07-24": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 796, "neutral": 270, "positive": 250, "total": 1316, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 773, "neutral": 248, "positive": 267, "total": 1288, "dominant": "negative"}, {"name": "สุรินทร์ - กาบเชิง", "lat": 14.42, "lng": 103.402, "negative": 838, "neutral": 248, "positive": 242, "total": 1328, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 1719, "neutral": 505, "positive": 494, "total": 2718, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 810, "neutral": 251, "positive": 250, "total": 1311, "dominant": "negative"}], "2025-07-25": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 744, "neutral": 254, "positive": 287, "total": 1285, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 746, "neutral": 260, "positive": 310, "total": 1316, "dominant": "negative"}, {"name": "สุรินทร์ - กาบเชิง", "lat": 14.42, "lng": 103.402, "negative": 726, "neutral": 271, "positive": 302, "total": 1299, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 1413, "neutral": 521, "positive": 602, "total": 2536, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 753, "neutral": 273, "positive": 282, "total": 1308, "dominant": "negative"}], "2025-07-26": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 1034, "neutral": 317, "positive": 480, "total": 1831, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 1044, "neutral": 327, "positive": 495, "total": 1866, "dominant": "negative"}, {"name": "สุรินทร์ - กาบเชิง", "lat": 14.42, "lng": 103.402, "negative": 1006, "neutral": 308, "positive": 454, "total": 1768, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 2092, "neutral": 657, "positive": 898, "total": 3647, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 1082, "neutral": 319, "positive": 465, "total": 1866, "dominant": "negative"}], "2025-07-27": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 622, "neutral": 218, "positive": 248, "total": 1088, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 580, "neutral": 203, "positive": 258, "total": 1041, "dominant": "negative"}, {"name": "สุรินทร์ - กาบเชิง", "lat": 14.42, "lng": 103.402, "negative": 569, "neutral": 223, "positive": 260, "total": 1052, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 1271, "neutral": 417, "positive": 512, "total": 2200, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 596, "neutral": 232, "positive": 238, "total": 1066, "dominant": "negative"}], "2025-07-28": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 1772, "neutral": 571, "positive": 230, "total": 2573, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 3604, "neutral": 1050, "positive": 444, "total": 5098, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 1797, "neutral": 548, "positive": 219, "total": 2564, "dominant": "negative"}], "2025-07-29": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 1118, "neutral": 360, "positive": 289, "total": 1767, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 2225, "neutral": 691, "positive": 588, "total": 3504, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 1153, "neutral": 370, "positive": 293, "total": 1816, "dominant": "negative"}], "2025-07-30": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 2151, "neutral": 795, "positive": 503, "total": 3449, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 2091, "neutral": 770, "positive": 465, "total": 3326, "dominant": "negative"}], "2025-07-31": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 2634, "neutral": 802, "positive": 432, "total": 3868, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 2618, "neutral": 766, "positive": 438, "total": 3822, "dominant": "negative"}], "2025-08-01": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 338, "neutral": 144, "positive": 150, "total": 632, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 322, "neutral": 132, "positive": 194, "total": 648, "dominant": "negative"}], "2025-08-02": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 2020, "neutral": 820, "positive": 788, "total": 3628, "dominant": "negative"}], "2025-08-03": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 2651, "neutral": 1199, "positive": 504, "total": 4354, "dominant": "negative"}], "2025-08-04": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 4146, "neutral": 1798, "positive": 959, "total": 6903, "dominant": "negative"}], "2025-08-05": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 2129, "neutral": 910, "positive": 688, "total": 3727, "dominant": "negative"}], "2025-08-06": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 3125, "neutral": 1250, "positive": 1195, "total": 5570, "dominant": "negative"}], "2025-08-07": [{"name": "กัมพูชา - พระวิหาร", "lat": 13.787, "lng": 104.976, "negative": 1542, "neutral": 713, "positive": 598, "total": 2853, "dominant": "negative"}, {"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 1570, "neutral": 716, "positive": 591, "total": 2877, "dominant": "negative"}], "2025-08-08": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 1676, "neutral": 836, "positive": 548, "total": 3060, "dominant": "negative"}], "2025-08-09": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 798, "neutral": 353, "positive": 324, "total": 1475, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 873, "neutral": 373, "positive": 325, "total": 1571, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 850, "neutral": 362, "positive": 330, "total": 1542, "dominant": "negative"}], "2025-08-10": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 2810, "neutral": 1093, "positive": 671, "total": 4574, "dominant": "negative"}], "2025-08-11": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 3186, "neutral": 1598, "positive": 1748, "total": 6532, "dominant": "negative"}], "2025-08-12": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 6470, "neutral": 1886, "positive": 1260, "total": 9616, "dominant": "negative"}], "2025-08-13": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 4343, "neutral": 1589, "positive": 1067, "total": 6999, "dominant": "negative"}], "2025-08-14": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 5863, "neutral": 2463, "positive": 1593, "total": 9919, "dominant": "negative"}], "2025-08-15": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 4391, "neutral": 1408, "positive": 1045, "total": 6844, "dominant": "negative"}], "2025-08-16": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 3384, "neutral": 1213, "positive": 680, "total": 5277, "dominant": "negative"}], "2025-08-17": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 6195, "neutral": 2397, "positive": 1056, "total": 9648, "dominant": "negative"}], "2025-08-18": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 1221, "neutral": 472, "positive": 410, "total": 2103, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 1150, "neutral": 498, "positive": 405, "total": 2053, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 1214, "neutral": 471, "positive": 354, "total": 2039, "dominant": "negative"}], "2025-08-19": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 1028, "neutral": 439, "positive": 217, "total": 1684, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 1021, "neutral": 490, "positive": 232, "total": 1743, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 1065, "neutral": 495, "positive": 220, "total": 1780, "dominant": "negative"}], "2025-08-20": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 607, "neutral": 274, "positive": 115, "total": 996, "dominant": "negative"}, {"name": "สุรินทร์ - พนมดงรัก", "lat": 14.212, "lng": 103.21, "negative": 599, "neutral": 328, "positive": 112, "total": 1039, "dominant": "negative"}, {"name": "อุบลราชธานี - น้ำยืน", "lat": 14.528, "lng": 105.206, "negative": 600, "neutral": 276, "positive": 137, "total": 1013, "dominant": "negative"}], "2025-08-21": [{"name": "ศรีสะเกษ - กันทรลักษ์", "lat": 14.642, "lng": 104.653, "negative": 693, "neutral": 259, "positive": 194, "total": 1146, "dominant": "negative"}]}};
+
+        // ========================= GLOBAL VARIABLES =========================
+        let currentPage = 'landing';
+        let dashboardCharts = {};
+        let dashboardMap = null;
+        let dashboardMapLayer = null;
+        let dashboardHeatLayer = null;
+        let dashboardViewMode = 'circles';
+        let todayDate = '';
+        let currentSelectedDate = '';
+        
+        // Map Application Object (for map page)
+        let App = {
+            map: null,
+            charts: {},
+            layers: { circles: null, heatmap: null, connections: null },
+            state: { selectedDate: null, currentView: 'circles' },
+            elements: {}
+        };
+
+        // ========================= POPUP FUNCTIONS =========================
+        function showSentimentPopup(sentiment) {
+            const popupData = {
+                positive: {
+                    title: 'อารมณ์ที่น่าพึงพอใจ (Positive)',
+                    image: 'Positive.jpg',
+                    description: 'อารมณ์เชิงบวกที่แสดงถึงความพึงพอใจ ความสุข ความชื่นชม และการสนับสนุน รวมถึงความรู้สึกดีใจ พอใจ และให้กำลังใจต่างๆ'
+                },
+                neutral: {
+                    title: 'อารมณ์เป็นกลาง (Neutral)',
+                    image: 'Neutral.jpg',
+                    description: 'ข้อความที่ไม่แสดงอารมณ์ชัดเจน เป็นเพียงข้อมูลหรือข้อเท็จจริง การสอบถาม การแจ้งข่าวสาร หรือความคิดเห็นที่ไม่มีอารมณ์เด่นชัด'
+                },
+                negative: {
+                    title: 'อารมณ์ที่ไม่น่าพึงพอใจ (Negative)',
+                    image: 'Negative.jpg',
+                    description: 'อารมณ์เชิงลบที่แสดงถึงความไม่พอใจ ความโกรธ ความผิดหวัง การวิพากษ์วิจารณ์ หรือความรู้สึกเสียใจและกังวลต่างๆ'
+                }
+            };
+
+            const data = popupData[sentiment];
+            if (!data) return;
+
+            document.getElementById('popup-image').src = data.image;
+            document.getElementById('popup-title').textContent = data.title;
+            document.getElementById('popup-description').textContent = data.description;
+            document.getElementById('popup-overlay').style.display = 'flex';
+        }
+
+        function closePopup() {
+            document.getElementById('popup-overlay').style.display = 'none';
+        }
+
+        // Close popup when clicking overlay
+        document.getElementById('popup-overlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+
+        // ========================= IFRAME FUNCTIONS =========================
+        function initializeDeepAnalysisIframe() {
+            const iframe = document.getElementById('deep-analysis-iframe');
+            const loading = document.getElementById('iframe-loading');
+            const errorDiv = document.getElementById('iframe-error');
+            const container = document.querySelector('.iframe-container');
+
+            // Show loading initially
+            loading.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+            // Auto-resize function
+            function autoResizeIframe() {
+                try {
+                    // Get the iframe content height if accessible
+                    if (iframe.contentDocument) {
+                        const contentHeight = iframe.contentDocument.documentElement.scrollHeight;
+                        const containerHeight = container.clientHeight;
+                        
+                        // Use the larger of content height or container height
+                        const finalHeight = Math.max(contentHeight, containerHeight);
+                        iframe.style.height = finalHeight + 'px';
+                    }
+                } catch (e) {
+                    // If cross-origin, fall back to container height
+                    iframe.style.height = '100%';
+                }
+            }
+
+            // Handle iframe load success
+            iframe.onload = function() {
+                loading.style.display = 'none';
+                errorDiv.style.display = 'none';
+                
+                // Auto-resize after loading
+                setTimeout(autoResizeIframe, 100);
+                setTimeout(autoResizeIframe, 500); // Second attempt after content settles
+            };
+
+            // Handle iframe load error
+            iframe.onerror = function() {
+                loading.style.display = 'none';
+                errorDiv.style.display = 'block';
+            };
+
+            // Auto-resize on window resize
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    iframe.style.height = '100%';
+                    setTimeout(autoResizeIframe, 100);
+                }, 250);
+            });
+
+            // Force iframe to 100% dimensions
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.minHeight = '100%';
+
+            // Fallback timeout for loading state
+            setTimeout(() => {
+                if (loading.style.display !== 'none') {
+                    loading.style.display = 'none';
+                    // Set iframe to full size even if content isn't loaded
+                    iframe.style.height = '100%';
+                }
+            }, 10000); // 10 second timeout
+        }
+
+        // ========================= DATE UTILITIES (moved to src/services/date.js) =========================
+
+        // ========================= NAVIGATION =========================
+        function showPage(page) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected page
+            document.getElementById(page + '-page').classList.add('active');
+
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Find and activate the correct nav link
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if ((page === 'landing' && link.textContent === 'Home') ||
+                    (page === 'dashboard' && link.textContent === 'Dashboard') ||
+                    (page === 'deep-analysis' && link.textContent === 'Deep Analysis') ||
+                    (page === 'map' && link.textContent === 'Map Analytics') ||
+                    (page === 'tutorial' && link.textContent === 'How to use') ||
+                    (page === 'about' && link.textContent === 'About')) {
+                    link.classList.add('active');
+                }
+            });
+
+            currentPage = page;
+
+            // Show/hide background image only on landing page
+            const backgroundImage = document.getElementById('background-image');
+            if (page === 'landing') {
+                backgroundImage.style.display = 'block';
+            } else {
+                backgroundImage.style.display = 'none';
+            }
+
+            // Initialize page-specific functionality
+            if (page === 'dashboard' && !dashboardMap) {
+                initializeDashboard();
+            } else if (page === 'deep-analysis') {
+                initializeDeepAnalysisIframe();
+            } else if (page === 'map' && !App.map) {
+                initializeMap();
+            }
+
+            // Update charts on page show
+            setTimeout(() => {
+                if (page === 'dashboard') {
+                    Object.values(dashboardCharts).forEach(chart => chart.resize());
+                    if (dashboardMap) dashboardMap.invalidateSize();
+                } else if (page === 'map') {
+                    Object.values(App.charts).forEach(chart => chart.resize());
+                    if (App.map) App.map.invalidateSize();
+                }
+            }, 100);
+        }
+
+        // Expose navigation for inline onclick handlers
+        window.showPage = showPage;
+
+        // ========================= NAVBAR SCROLL EFFECT =========================
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // ========================= DASHBOARD FUNCTIONS =========================
+        function initializeDashboard() {
+            todayDate = getTodayDate(DATA);
+            currentSelectedDate = todayDate;
+            
+            populateDateSelector();
+            updateDateDisplay();
+            initDashboardCharts();
+            initDashboardMap();
+            renderDashboardStatics();
+            updateDashboard(currentSelectedDate);
+        }
+
+        function populateDateSelector() {
+            const selector = document.getElementById('date-selector');
+            selector.innerHTML = '';
+            
+            DATA.dates.slice().reverse().forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = formatDateThai(date);
+                if (date === todayDate) {
+                    option.selected = true;
+                }
+                selector.appendChild(option);
+            });
+        }
+
+        function onDateChange() {
+            const selectedDate = document.getElementById('date-selector').value;
+            currentSelectedDate = selectedDate;
+            updateDashboard(selectedDate);
+            updateSelectedDateDisplay(selectedDate);
+        }
+
+        // expose for inline onchange attribute
+        window.onDateChange = onDateChange;
+
+        function updateSelectedDateDisplay(selectedDate) {
+            const display = document.getElementById('selected-date-display');
+            if (selectedDate === todayDate) {
+                display.textContent = 'วันนี้';
+            } else {
+                display.textContent = formatDateThai(selectedDate);
+            }
+        }
+
+        function updateDateDisplay() {
+            // Update current datetime
+            document.getElementById('current-datetime').textContent = getCurrentDateTime();
+            
+            // Update today's date display
+            const todayDisplay = formatDateThai(todayDate);
+            document.getElementById('today-display').textContent = todayDisplay;
+            
+            // Update selected date display
+            updateSelectedDateDisplay(currentSelectedDate);
+        }
+
+        function initDashboardCharts() {
+            // Gauge charts using original functions
+            const gPOS = echarts.init(document.getElementById('gauge_positive'));
+            const gNEU = echarts.init(document.getElementById('gauge_neutral'));
+            const gNEG = echarts.init(document.getElementById('gauge_negative'));
+            
+            gPOS.setOption(gaugeOption('Positive', DATA.overall.perc.positive, getComputedStyle(document.documentElement).getPropertyValue('--green')));
+            gNEU.setOption(gaugeOption('Neutral', DATA.overall.perc.neutral, getComputedStyle(document.documentElement).getPropertyValue('--yellow')));
+            gNEG.setOption(gaugeOption('Negative', DATA.overall.perc.negative, getComputedStyle(document.documentElement).getPropertyValue('--red')));
+
+            dashboardCharts.gaugePositive = gPOS;
+            dashboardCharts.gaugeNeutral = gNEU;
+            dashboardCharts.gaugeNegative = gNEG;
+
+            // Time series chart
+            dashboardCharts.timeseries = echarts.init(document.getElementById('timeseries_chart'));
+            dashboardCharts.timeseries.setOption({
+                tooltip: { 
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    borderColor: 'transparent',
+                    textStyle: { color: '#fff' }
+                },
+                legend: { 
+                    data: ['Negative', 'Neutral', 'Positive'],
+                    textStyle: { color: '#cbd5e1' }
+                },
+                xAxis: { 
+                    type: 'category', 
+                    data: DATA.dates,
+                    axisLabel: { color: '#cbd5e1' },
+                    axisLine: { lineStyle: { color: '#334155' } }
+                },
+                yAxis: { 
+                    type: 'value', 
+                    name: 'จำนวนข้อความ',
+                    nameTextStyle: { color: '#cbd5e1' },
+                    axisLabel: { color: '#cbd5e1' },
+                    axisLine: { lineStyle: { color: '#334155' } },
+                    splitLine: { lineStyle: { color: '#334155' } }
+                },
+                series: [
+                    { 
+                        name: 'Negative', 
+                        type: 'line', 
+                        data: DATA.series.negative, 
+                        smooth: true, 
+                        lineStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--red') }, 
+                        itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--red') } 
+                    },
+                    { 
+                        name: 'Neutral', 
+                        type: 'line', 
+                        data: DATA.series.neutral, 
+                        smooth: true, 
+                        lineStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--yellow') }, 
+                        itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--yellow') } 
+                    },
+                    { 
+                        name: 'Positive', 
+                        type: 'line', 
+                        data: DATA.series.positive, 
+                        smooth: true, 
+                        lineStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--green') }, 
+                        itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--green') } 
+                    }
+                ]
+            });
+
+            // Pie chart
+            dashboardCharts.pie = echarts.init(document.getElementById('pie_chart'));
+        }
+
+        function initDashboardMap() {
+            dashboardMap = L.map('dashboard_map', { center: [14.6, 104.9], zoom: 7 });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap, &copy; CartoDB',
+                maxZoom: 18,
+                subdomains: 'abcd'
+            }).addTo(dashboardMap);
+            dashboardMapLayer = L.layerGroup().addTo(dashboardMap);
+            dashboardHeatLayer = L.layerGroup();
+
+            // wire buttons
+            const btnCircles = document.getElementById('db_btn_circles');
+            const btnHeatmap = document.getElementById('db_btn_heatmap');
+            if (btnCircles && btnHeatmap) {
+                btnCircles.onclick = () => switchDashboardView('circles');
+                btnHeatmap.onclick = () => switchDashboardView('heatmap');
+            }
+        }
+
+        function gaugeOption(name, value, color) {
+            return {
+                title: { text: name, left: 'center', top: 10, textStyle: { fontSize: 14, color: '#f8fafc' } },
+                series: [{
+                    type: 'gauge',
+                    startAngle: 180, endAngle: 0, min: 0, max: 100,
+                    center: ['50%', '65%'], radius: '95%',
+                    axisLine: { lineStyle: { width: 18, color: [[value / 100, color], [1, '#334155']] } },
+                    pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
+                    detail: { valueAnimation: true, formatter: '{value}%', color: color, fontSize: 22, offsetCenter: [0, -10] },
+                    data: [{ value: Math.round(value * 100) / 100 }]
+                }]
+            };
+        }
+
+        function renderDashboardStatics() {
+            // Calculate top stats
+            const dateArray = DATA.dates.map(date => ({
+                date,
+                ...DATA.byDate[date]
+            }));
+
+            // Top total messages
+            const topTotal = [...dateArray].sort((a, b) => b.total - a.total).slice(0, 3);
+            document.getElementById('stat_top_total').innerHTML = topTotal.map(item => 
+                `${formatDateThai(item.date)} — <strong>${item.total.toLocaleString()}</strong> ข้อความ`
+            ).join('<br>');
+
+            // Top negative messages
+            const topNegative = [...dateArray].sort((a, b) => b.negative - a.negative).slice(0, 3);
+            document.getElementById('stat_top_negative').innerHTML = topNegative.map(item => 
+                `${formatDateThai(item.date)} — <strong style="color: var(--negative)">${item.negative.toLocaleString()}</strong> เชิงลบ`
+            ).join('<br>');
+
+            // Overall totals
+            document.getElementById('sum_positive').textContent = DATA.overall.totals.positive.toLocaleString();
+            document.getElementById('sum_neutral').textContent = DATA.overall.totals.neutral.toLocaleString();
+            document.getElementById('sum_negative').textContent = DATA.overall.totals.negative.toLocaleString();
+        }
+
+        function updateDashboard(selectedDate) {
+            // Update all dashboard components including gauges
+            updateDashboardGauges(selectedDate);
+            renderDashboardPie(selectedDate);
+            renderDashboardMap(selectedDate);
+        }
+
+        function updateDashboardGauges(selectedDate) {
+            const data = DATA.byDate[selectedDate] || { negative: 0, neutral: 0, positive: 0, total: 0 };
+            const total = data.total;
+            
+            if (total > 0) {
+                const positivePerc = (data.positive / total) * 100;
+                const neutralPerc = (data.neutral / total) * 100;
+                const negativePerc = (data.negative / total) * 100;
+                
+                // Update gauge charts with date-specific percentages
+                dashboardCharts.gaugePositive.setOption({
+                    series: [{
+                        data: [{ value: Math.round(positivePerc * 100) / 100 }]
+                    }]
+                });
+                
+                dashboardCharts.gaugeNeutral.setOption({
+                    series: [{
+                        data: [{ value: Math.round(neutralPerc * 100) / 100 }]
+                    }]
+                });
+                
+                dashboardCharts.gaugeNegative.setOption({
+                    series: [{
+                        data: [{ value: Math.round(negativePerc * 100) / 100 }]
+                    }]
+                });
+            } else {
+                // If no data, set all gauges to 0
+                [dashboardCharts.gaugePositive, dashboardCharts.gaugeNeutral, dashboardCharts.gaugeNegative].forEach(chart => {
+                    chart.setOption({
+                        series: [{
+                            data: [{ value: 0 }]
+                        }]
+                    });
+                });
+            }
+        }
+
+        function renderDashboardPie(selectedDate) {
+            const t = DATA.byDate[selectedDate] || { negative: 0, neutral: 0, positive: 0, total: 0 };
+            dashboardCharts.pie.setOption({
+                tooltip: { 
+                    trigger: 'item', 
+                    formatter: '{b}: {c} ({d}%)',
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    borderColor: 'transparent',
+                    textStyle: { color: '#fff' }
+                },
+                title: {
+                    text: t.total.toLocaleString(), 
+                    subtext: 'รวมทั้งหมด', 
+                    left: 'center', 
+                    top: 'center',
+                    textStyle: { color: '#f8fafc', fontSize: 24, fontWeight: 'bold' },
+                    subtextStyle: { color: '#cbd5e1', fontSize: 14 }
+                },
+                series: [{
+                    type: 'pie', 
+                    radius: ['35%', '70%'], 
+                    avoidLabelOverlap: true,
+                    label: { 
+                        formatter: '{b}\n{d}%',
+                        color: '#f8fafc'
+                    },
+                    data: [
+                        { name: 'Negative', value: t.negative, itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--red') } },
+                        { name: 'Neutral', value: t.neutral, itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--yellow') } },
+                        { name: 'Positive', value: t.positive, itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--green') } }
+                    ]
+                }]
+            });
+        }
+
+        function renderDashboardMap(selectedDate) {
+            dashboardMapLayer.clearLayers();
+            dashboardHeatLayer.clearLayers();
+            const markers = DATA.markersByDate[selectedDate] || [];
+            
+            if (dashboardViewMode === 'circles') {
+                if (!dashboardMap.hasLayer(dashboardMapLayer)) dashboardMap.addLayer(dashboardMapLayer);
+                if (dashboardMap.hasLayer(dashboardHeatLayer)) dashboardMap.removeLayer(dashboardHeatLayer);
+                markers.forEach(m => drawEnhancedMarker(m, dashboardMapLayer));
+            } else {
+                if (!dashboardMap.hasLayer(dashboardHeatLayer)) dashboardMap.addLayer(dashboardHeatLayer);
+                if (dashboardMap.hasLayer(dashboardMapLayer)) dashboardMap.removeLayer(dashboardMapLayer);
+                if (markers.length > 0) {
+                    const heatData = markers.map(m => [m.lat, m.lng, Math.max(1, m.total)]);
+                    const heat = L.heatLayer(heatData, { radius: 40, blur: 22, maxZoom: 10, gradient: {0.0:'blue', 0.5:'yellow', 1.0:'red'} });
+                    dashboardHeatLayer.addLayer(heat);
+                }
+            }
+            
+            // Fit map to show all markers
+            if (markers.length > 0) {
+                const group = new L.featureGroup(dashboardMapLayer.getLayers());
+                dashboardMap.fitBounds(group.getBounds(), { padding: [20, 20] });
+            }
+        }
+
+        function switchDashboardView(mode) {
+            dashboardViewMode = mode;
+            const btnCircles = document.getElementById('db_btn_circles');
+            const btnHeatmap = document.getElementById('db_btn_heatmap');
+            if (btnCircles && btnHeatmap) {
+                btnCircles.classList.toggle('active', mode === 'circles');
+                btnHeatmap.classList.toggle('active', mode === 'heatmap');
+            }
+            renderDashboardMap(currentSelectedDate);
+        }
+
+        function drawEnhancedMarker(marker, layer) {
+            const maxTotal = Math.max(...Object.values(DATA.markersByDate).flat().map(m => m.total), 1);
+            const scaleFactor = Math.sqrt(marker.total / maxTotal);
+            
+            // Base radius multiplier (tune smaller for better visibility)
+            const baseRadius = 8;
+            
+            // Create overlapping circles for each sentiment
+            const negativeRadius = Math.max(2, Math.sqrt(marker.negative) * baseRadius * scaleFactor * 0.5);
+            const neutralRadius  = Math.max(2, Math.sqrt(marker.neutral)  * baseRadius * scaleFactor * 0.35);
+            const positiveRadius = Math.max(2, Math.sqrt(marker.positive) * baseRadius * scaleFactor * 0.25);
+            
+            // Negative circle (largest)
+            if (marker.negative > 0) {
+                L.circle([marker.lat, marker.lng], {
+                    radius: negativeRadius * 1000, // Convert to meters
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--red'),
+                    fillColor: getComputedStyle(document.documentElement).getPropertyValue('--red'),
+                    fillOpacity: 0.3,
+                    weight: 2,
+                    interactive: false,
+                    bubblingMouseEvents: false
+                }).addTo(layer);
+            }
+            
+            // Neutral circle (medium)
+            if (marker.neutral > 0) {
+                L.circle([marker.lat, marker.lng], {
+                    radius: neutralRadius * 1000,
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--yellow'),
+                    fillColor: getComputedStyle(document.documentElement).getPropertyValue('--yellow'),
+                    fillOpacity: 0.4,
+                    weight: 2,
+                    interactive: false,
+                    bubblingMouseEvents: false
+                }).addTo(layer);
+            }
+            
+            // Positive circle (smallest, on top)
+            if (marker.positive > 0) {
+                L.circle([marker.lat, marker.lng], {
+                    radius: positiveRadius * 1000,
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--green'),
+                    fillColor: getComputedStyle(document.documentElement).getPropertyValue('--green'),
+                    fillOpacity: 0.5,
+                    weight: 2,
+                    interactive: false,
+                    bubblingMouseEvents: false
+                }).addTo(layer);
+            }
+            
+            // Center marker
+            const centerMarker = L.circleMarker([marker.lat, marker.lng], {
+                radius: 6,
+                color: '#fff',
+                fillColor: colorByDominant(marker.dominant),
+                fillOpacity: 1,
+                weight: 2
+            }).addTo(layer);
+            centerMarker.bringToFront();
+            
+            // Popup
+            const html = `
+                <div style="font-weight:600;margin-bottom:4px;font-family:var(--font-thai)">${marker.name}</div>
+                <div>Positive: <span style="color:var(--green)">${marker.positive.toLocaleString()}</span></div>
+                <div>Neutral: <span style="color:var(--yellow)">${marker.neutral.toLocaleString()}</span></div>
+                <div>Negative: <span style="color:var(--red)">${marker.negative.toLocaleString()}</span></div>
+                <div style="margin-top:4px">Total: <b>${marker.total.toLocaleString()}</b></div>`;
+            centerMarker.bindPopup(html);
+        }
+
+        function colorByDominant(d) {
+            if (d === 'positive') return getComputedStyle(document.documentElement).getPropertyValue('--green');
+            if (d === 'neutral') return getComputedStyle(document.documentElement).getPropertyValue('--yellow');
+            return getComputedStyle(document.documentElement).getPropertyValue('--red');
+        }
+
+        // ========================= MAP PAGE FUNCTIONS =========================
+        function initializeMap() {
+            todayDate = getTodayDate(DATA);
+            
+            App.elements = {
+                leftPanel: document.getElementById('map_left_panel'),
+                rightPanel: document.getElementById('map_right_panel'),
+                leftPanelToggle: document.getElementById('map_left_toggle'),
+                rightPanelToggle: document.getElementById('map_right_toggle'),
+                calloutsList: document.getElementById('map_callouts_list'),
+                leadersRoot: document.getElementById('map_leaders'),
+                btnCircles: document.getElementById('btn_circles'),
+                btnHeatmap: document.getElementById('btn_heatmap')
+            };
+
+            initMapApp();
+            initMapCharts();
+            initMapControls();
+            populateMapDateSelector();
+
+            App.state.selectedDate = todayDate;
+
+            renderStaticComponents(DATA);
+            updateAll(App.state.selectedDate);
+            updateMapDateDisplay();
+
+            setTimeout(() => {
+                App.elements.leftPanel.classList.add('open');
+                App.elements.rightPanel.classList.add('open');
+            }, 500);
+        }
+
+        function populateMapDateSelector() {
+            const selector = document.getElementById('map-date-selector');
+            selector.innerHTML = '';
+            
+            DATA.dates.slice().reverse().forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = formatDateThai(date);
+                if (date === todayDate) {
+                    option.selected = true;
+                }
+                selector.appendChild(option);
+            });
+        }
+
+        function onMapDateChange() {
+            const selectedDate = document.getElementById('map-date-selector').value;
+            App.state.selectedDate = selectedDate;
+            updateAll(selectedDate);
+            updateMapDateDisplay(selectedDate);
+        }
+        // expose for inline onchange on Map page
+        window.onMapDateChange = onMapDateChange;
+
+        function updateMapDateDisplay(selectedDate = null) {
+            const dateToShow = selectedDate || App.state.selectedDate || todayDate;
+            const todayDisplay = formatDateThai(dateToShow);
+            document.getElementById('map-today-display').textContent = todayDisplay;
+        }
+
+        function initMapApp() {
+            App.map = L.map('full_map', { 
+                center: [14.6, 104.9], 
+                zoom: 7, 
+                zoomControl: false 
+            });
+            
+            // เปลี่ยนเป็นแผนที่ดาวเทียม
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                maxZoom: 18
+            }).addTo(App.map);
+
+            App.layers.circles = L.layerGroup().addTo(App.map);
+            App.layers.heatmap = L.layerGroup();
+            App.layers.connections = L.layerGroup().addTo(App.map); // เพิ่ม layer สำหรับเส้นโยง
+        }
+
+        function initMapCharts() {
+            App.charts.pie = echarts.init(document.getElementById('map_pie_chart'));
+        }
+
+        function initMapControls() {
+            // Panel toggles
+            App.elements.leftPanelToggle.onclick = () => {
+                App.elements.leftPanel.classList.toggle('open');
+                App.elements.leftPanelToggle.innerHTML = App.elements.leftPanel.classList.contains('open') ? '&lt;' : '&gt;';
+            };
+
+            App.elements.rightPanelToggle.onclick = () => {
+                App.elements.rightPanel.classList.toggle('open');
+                App.elements.rightPanelToggle.innerHTML = App.elements.rightPanel.classList.contains('open') ? '&gt;' : '&lt;';
+                
+                // Redraw leader lines when panel is toggled
+                setTimeout(updateLeaderLines, 300);
+            };
+
+            // View mode toggles
+            App.elements.btnCircles.onclick = () => switchView('circles');
+            App.elements.btnHeatmap.onclick = () => switchView('heatmap');
+            
+            // Map event listeners for leader line updates
+            App.map.on('zoom', updateLeaderLines);
+            App.map.on('move', updateLeaderLines);
+            App.map.on('resize', updateLeaderLines);
+        }
+
+        function switchView(mode) {
+            App.state.currentView = mode;
+            
+            // Update button states
+            App.elements.btnCircles.classList.toggle('active', mode === 'circles');
+            App.elements.btnHeatmap.classList.toggle('active', mode === 'heatmap');
+            
+            // Switch layers
+            if (mode === 'circles') {
+                App.map.addLayer(App.layers.circles);
+                App.map.addLayer(App.layers.connections); // แสดงเส้นโยงใน Circle View
+                App.map.removeLayer(App.layers.heatmap);
+                
+                // Show leader lines in circle view
+                setTimeout(updateLeaderLines, 100);
+            } else {
+                App.map.removeLayer(App.layers.circles);
+                App.map.removeLayer(App.layers.connections); // ซ่อนเส้นโยงใน Heatmap View
+                App.map.addLayer(App.layers.heatmap);
+                
+                // Hide leader lines in heatmap view
+                App.elements.leadersRoot.innerHTML = '';
+            }
+        }
+
+        function renderStaticComponents(data) {
+            // Calculate statistics
+            const dateArray = data.dates.map(date => ({
+                date,
+                ...data.byDate[date]
+            }));
+
+            // Top total messages
+            const topTotal = [...dateArray].sort((a, b) => b.total - a.total).slice(0, 3);
+            document.getElementById('map_stat_total').innerHTML = topTotal.map(item => 
+                `${formatDateThai(item.date)}<br><strong>${item.total.toLocaleString()}</strong> ข้อความ`
+            ).join('<br><br>');
+
+            // Top negative messages
+            const topNegative = [...dateArray].sort((a, b) => b.negative - a.negative).slice(0, 3);
+            document.getElementById('map_stat_negative').innerHTML = topNegative.map(item => 
+                `${formatDateThai(item.date)}<br><strong style="color: var(--negative)">${item.negative.toLocaleString()}</strong> เชิงลบ`
+            ).join('<br><br>');
+        }
+
+        function updateAll(selectedDate) {
+            renderMapLayers(selectedDate);
+            renderMapPie(selectedDate);
+            renderCallouts(selectedDate);
+            drawLeaderLines(selectedDate);
+        }
+
+        function renderMapLayers(selectedDate) {
+            const markers = DATA.markersByDate[selectedDate] || [];
+            
+            // Clear existing layers
+            App.layers.circles.clearLayers();
+            App.layers.heatmap.clearLayers();
+            App.layers.connections.clearLayers(); // Clear connection lines
+            
+            // Draw connection lines between all markers
+            if (markers.length > 1) {
+                drawConnectionLines(markers);
+            }
+            
+            // Render circles
+            markers.forEach(marker => {
+                drawMapMarker(marker, App.layers.circles);
+            });
+            
+            // Render heatmap
+            if (markers.length > 0) {
+                const heatData = markers.map(m => [m.lat, m.lng, m.total]);
+                const heat = L.heatLayer(heatData, {
+                    radius: 50,
+                    blur: 25,
+                    maxZoom: 10,
+                    gradient: {
+                        0.0: 'blue',
+                        0.5: 'yellow',
+                        1.0: 'red'
+                    }
+                });
+                App.layers.heatmap.addLayer(heat);
+            }
+
+            // Fit bounds
+            if (markers.length > 0) {
+                const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
+                App.map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        function drawMapMarker(marker, layer) {
+            const maxTotal = Math.max(...Object.values(DATA.markersByDate).flat().map(m => m.total), 1);
+            const scaleFactor = Math.sqrt(marker.total / maxTotal);
+            const baseRadiusKm = Math.max(8, 40 * scaleFactor); // base visual radius (km)
+
+            const total = Math.max(1, (marker.positive || 0) + (marker.neutral || 0) + (marker.negative || 0));
+            const posRatio = (marker.positive || 0) / total;
+            const neuRatio = (marker.neutral || 0) / total;
+            const negRatio = (marker.negative || 0) / total;
+
+            const green = getComputedStyle(document.documentElement).getPropertyValue('--green');
+            const yellow = getComputedStyle(document.documentElement).getPropertyValue('--yellow');
+            const red   = getComputedStyle(document.documentElement).getPropertyValue('--red');
+
+            // Draw three concentric circles (largest = negative, middle = neutral, smallest = positive)
+            if (negRatio > 0) {
+                L.circle([marker.lat, marker.lng], {
+                    radius: (baseRadiusKm * (0.4 + 0.6 * negRatio)) * 1000,
+                    color: red,
+                    fillColor: red,
+                    fillOpacity: 0.35,
+                    weight: 3
+                }).addTo(layer);
+            }
+
+            if (neuRatio > 0) {
+                L.circle([marker.lat, marker.lng], {
+                    radius: (baseRadiusKm * (0.25 + 0.5 * neuRatio)) * 1000,
+                    color: yellow,
+                    fillColor: yellow,
+                    fillOpacity: 0.45,
+                    weight: 3
+                }).addTo(layer);
+            }
+
+            if (posRatio > 0) {
+                L.circle([marker.lat, marker.lng], {
+                    radius: (baseRadiusKm * (0.15 + 0.45 * posRatio)) * 1000,
+                    color: green,
+                    fillColor: green,
+                    fillOpacity: 0.55,
+                    weight: 3
+                }).addTo(layer);
+            }
+
+            // Center marker for focus
+            L.circleMarker([marker.lat, marker.lng], {
+                radius: 5,
+                color: '#fff',
+                fillColor: '#ffffff',
+                fillOpacity: 1,
+                weight: 2
+            }).addTo(layer);
+            
+            // Enhanced popup with better styling
+            const popup = `
+                <div style="font-family: var(--font-thai); min-width: 220px; color: #333;">
+                    <div style="font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;">
+                        ${marker.name}
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <span style="color: #10b981; font-weight: 600;">เชิงบวก:</span> 
+                        <span style="font-weight: 600;">${marker.positive.toLocaleString()}</span>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <span style="color: #f59e0b; font-weight: 600;">เป็นกลาง:</span> 
+                        <span style="font-weight: 600;">${marker.neutral.toLocaleString()}</span>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <span style="color: #ef4444; font-weight: 600;">เชิงลบ:</span> 
+                        <span style="font-weight: 600;">${marker.negative.toLocaleString()}</span>
+                    </div>
+                    <div style="padding-top: 8px; border-top: 1px solid #e2e8f0; text-align: center;">
+                        <span style="color: #1e293b; font-weight: 700; font-size: 1rem;">
+                            รวมทั้งหมด: ${marker.total.toLocaleString()} ข้อความ
+                        </span>
+                    </div>
+                </div>`;
+            // Bind popup to the top-most drawn layer (attach to map at this point)
+            L.marker([marker.lat, marker.lng], {opacity: 0}).addTo(layer).bindPopup(popup, {
+                maxWidth: 250,
+                className: 'custom-popup'
+            });
+            
+            // (Removed) floating text label over map marker
+        }
+
+        function drawConnectionLines(markers) {
+            if (markers.length < 2) return;
+            
+            // สร้างเส้นโยงระหว่างทุกคู่ของสถานที่
+            for (let i = 0; i < markers.length; i++) {
+                for (let j = i + 1; j < markers.length; j++) {
+                    const marker1 = markers[i];
+                    const marker2 = markers[j];
+                    
+                    // คำนวณความเข้มของเส้นตามจำนวนข้อมูลรวม
+                    const avgTotal = (marker1.total + marker2.total) / 2;
+                    const maxTotal = Math.max(...markers.map(m => m.total));
+                    const intensity = avgTotal / maxTotal;
+                    
+                    // วาดเส้นโยง
+                    const line = L.polyline([
+                        [marker1.lat, marker1.lng],
+                        [marker2.lat, marker2.lng]
+                    ], {
+                        color: '#ffffff',
+                        weight: Math.max(1, intensity * 3),
+                        opacity: Math.max(0.3, intensity * 0.8),
+                        dashArray: '5, 10',
+                        className: 'connection-line'
+                    }).addTo(App.layers.connections);
+                    
+                    // เพิ่ม popup สำหรับเส้นโยง
+                    const connectionInfo = `
+                        <div style="font-family:var(--font-thai);text-align:center;">
+                            <div style="font-weight:600;margin-bottom:4px;">การเชื่อมต่อ</div>
+                            <div>${marker1.name}</div>
+                            <div style="margin:4px 0;">↕</div>
+                            <div>${marker2.name}</div>
+                            <div style="margin-top:8px;padding-top:8px;border-top:1px solid #334155;">
+                                ข้อมูลรวม: ${(marker1.total + marker2.total).toLocaleString()}
+                            </div>
+                        </div>`;
+                    line.bindPopup(connectionInfo);
+                }
+            }
+        }
+
+        function renderMapPie(selectedDate) {
+            const data = DATA.byDate[selectedDate] || { negative: 0, neutral: 0, positive: 0, total: 0 };
+            
+            App.charts.pie.setOption({
+                tooltip: { 
+                    trigger: 'item', 
+                    formatter: '{b}: {c} ({d}%)',
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    borderColor: 'transparent',
+                    textStyle: { color: '#fff' }
+                },
+                title: {
+                    text: data.total.toLocaleString(), 
+                    subtext: 'รวมทั้งหมด', 
+                    left: 'center', 
+                    top: 'center',
+                    textStyle: { color: '#f8fafc', fontSize: 20, fontWeight: 'bold' },
+                    subtextStyle: { color: '#cbd5e1', fontSize: 12 }
+                },
+                series: [{
+                    type: 'pie', 
+                    radius: ['35%', '70%'],
+                    center: ['50%', '50%'],
+                    avoidLabelOverlap: true,
+                    label: { 
+                        formatter: '{b}\n{d}%',
+                        color: '#f8fafc',
+                        fontSize: 10
+                    },
+                    data: [
+                        { name: 'Negative', value: data.negative, itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--red') } },
+                        { name: 'Neutral', value: data.neutral, itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--yellow') } },
+                        { name: 'Positive', value: data.positive, itemStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--green') } }
+                    ]
+                }]
+            });
+        }
+
+        function renderCallouts(selectedDate) {
+            const markers = DATA.markersByDate[selectedDate] || [];
+            const calloutsList = App.elements.calloutsList;
+            
+            // Update title
+            document.getElementById('map_callouts_title').textContent = 
+                `สถานที่ทั้งหมด (${markers.length})`;
+            
+            // Clear and populate
+            calloutsList.innerHTML = '';
+            
+            markers.forEach((marker, index) => {
+                const callout = document.createElement('div');
+                callout.className = 'callout';
+                callout.setAttribute('data-marker-index', index);
+                callout.innerHTML = `
+                    <div class="callout-title">${marker.name}</div>
+                    <div class="callout-meta">
+                        รวม: <span style="color: #fff; font-weight: 600;">${marker.total.toLocaleString()}</span> | 
+                        บวก: <span style="color: var(--green); font-weight: 600;">${marker.positive.toLocaleString()}</span> | 
+                        กลาง: <span style="color: var(--yellow); font-weight: 600;">${marker.neutral.toLocaleString()}</span> | 
+                        ลบ: <span style="color: var(--negative); font-weight: 600;">${marker.negative.toLocaleString()}</span>
+                    </div>
+                    <div class="callout-stats">
+                        <span style="color: var(--accent); font-size: 0.8rem;">คลิกเพื่อดู</span>
+                    </div>`;
+                
+                callout.onclick = () => {
+                    App.map.setView([marker.lat, marker.lng], 9);
+                    // Add a slight delay and then trigger popup
+                    setTimeout(() => {
+                        App.map.eachLayer(layer => {
+                            if (layer.getLatLng && 
+                                Math.abs(layer.getLatLng().lat - marker.lat) < 0.01 && 
+                                Math.abs(layer.getLatLng().lng - marker.lng) < 0.01) {
+                                layer.openPopup();
+                            }
+                        });
+                    }, 300);
+                };
+                
+                calloutsList.appendChild(callout);
+            });
+            
+            // Draw leader lines after callouts are rendered
+            setTimeout(() => {
+                drawLeaderLines(selectedDate);
+            }, 150);
+        }
+
+        // ========================= LEADER LINES FUNCTIONS =========================
+        function drawLeaderLines(selectedDate) {
+            const markers = DATA.markersByDate[selectedDate] || [];
+            const leadersRoot = App.elements.leadersRoot;
+            
+            // Clear existing leader lines
+            leadersRoot.innerHTML = '';
+            
+            if (markers.length === 0 || !App.elements.rightPanel.classList.contains('open')) {
+                return;
+            }
+            
+            // Create SVG element
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            svg.style.zIndex = '600';
+            
+            // Wait for callouts to render, then draw lines
+            setTimeout(() => {
+                const calloutElements = App.elements.calloutsList.querySelectorAll('.callout');
+                
+                markers.forEach((marker, index) => {
+                    if (index < calloutElements.length) {
+                        drawSingleLeaderLine(svg, marker, calloutElements[index]);
+                    }
+                });
+                
+                leadersRoot.appendChild(svg);
+            }, 100);
+        }
+        
+        function drawSingleLeaderLine(svg, marker, calloutElement) {
+            // Get marker position on screen
+            const markerLatLng = L.latLng(marker.lat, marker.lng);
+            const markerPoint = App.map.latLngToContainerPoint(markerLatLng);
+            
+            // Get callout position on screen
+            const calloutRect = calloutElement.getBoundingClientRect();
+            const mapRect = App.map.getContainer().getBoundingClientRect();
+            
+            // Calculate relative positions
+            const startX = markerPoint.x;
+            const startY = markerPoint.y;
+            const endX = calloutRect.left - mapRect.left - 20; // 20px margin from panel
+            const endY = (calloutRect.top + calloutRect.height / 2) - mapRect.top;
+            
+            // Create line with slight curve
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', startX);
+            line.setAttribute('y1', startY);
+            line.setAttribute('x2', endX);
+            line.setAttribute('y2', endY);
+            line.setAttribute('stroke', '#ffffff');
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('opacity', '0.8');
+            line.setAttribute('stroke-dasharray', '5,5');
+            line.style.filter = 'drop-shadow(0 0 3px rgba(0, 0, 0, 0.8))';
+            line.classList.add('leader-line');
+            
+            svg.appendChild(line);
+            
+            // Add arrowhead at the end
+            const arrowHead = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            arrowHead.setAttribute('cx', endX);
+            arrowHead.setAttribute('cy', endY);
+            arrowHead.setAttribute('r', '3');
+            arrowHead.setAttribute('fill', '#ffffff');
+            arrowHead.setAttribute('stroke', '#000000');
+            arrowHead.setAttribute('stroke-width', '1');
+            arrowHead.style.filter = 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.6))';
+            
+            svg.appendChild(arrowHead);
+        }
+        
+        function updateLeaderLines() {
+            if (App.state.selectedDate) {
+                drawLeaderLines(App.state.selectedDate);
+            }
+        }
+
+        // ========================= INITIALIZATION =========================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize datetime display
+            todayDate = getTodayDate(DATA);
+            
+            // Initialize current date time display
+            setInterval(() => {
+                if (document.getElementById('current-datetime')) {
+                    document.getElementById('current-datetime').textContent = getCurrentDateTime();
+                }
+            }, 60000); // Update every minute
+            
+            // Initial display
+            if (document.getElementById('current-datetime')) {
+                document.getElementById('current-datetime').textContent = getCurrentDateTime();
+            }
+            
+            // Close popup with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closePopup();
+                }
+            });
+            
+            // Start with landing page
+            showPage('landing');
+        });
+
+        // ========================= WINDOW RESIZE HANDLING =========================
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                // Resize dashboard charts
+                if (currentPage === 'dashboard') {
+                    Object.values(dashboardCharts).forEach(chart => chart.resize());
+                    if (dashboardMap) dashboardMap.invalidateSize();
+                }
+                
+                // Resize map charts
+                if (currentPage === 'map') {
+                    Object.values(App.charts).forEach(chart => chart.resize());
+                    if (App.map) App.map.invalidateSize();
+                }
+            }, 100);
+        });
+
+        // ========================= PERFORMANCE OPTIMIZATION =========================
+        // Debounce function for performance
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Throttle function for performance
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (!inThrottle) {
+                    func.apply(context, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            }
+        }
+
+        // ========================= ERROR HANDLING =========================
+        window.addEventListener('error', function(e) {
+            console.error('Application error:', e.error);
+        });
+
+        // ========================= ACCESSIBILITY =========================
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            // Tab navigation enhancement could be added here
+            if (e.key === 'Tab') {
+                // Add visual focus indicators if needed
+            }
+        });
+
+        // ========================= MOBILE OPTIMIZATION =========================
+        // Touch events for mobile
+        let touchStartX, touchStartY;
+        
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        document.addEventListener('touchend', function(e) {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            // Reset values
+            touchStartX = null;
+            touchStartY = null;
+        }, { passive: true });
+
+        // ========================= EXPORT FUNCTIONS =========================
+        // These could be used for data export functionality
+        function exportData(format = 'json') {
+            try {
+                let dataToExport;
+                
+                if (format === 'json') {
+                    dataToExport = JSON.stringify(DATA, null, 2);
+                } else if (format === 'csv') {
+                    // Convert to CSV format
+                    const headers = ['Date', 'Positive', 'Neutral', 'Negative', 'Total'];
+                    const rows = DATA.dates.map(date => {
+                        const dayData = DATA.byDate[date];
+                        return [date, dayData.positive, dayData.neutral, dayData.negative, dayData.total];
+                    });
+                    
+                    dataToExport = [headers, ...rows].map(row => row.join(',')).join('\n');
+                }
+                
+                // Create download link
+                const blob = new Blob([dataToExport], { 
+                    type: format === 'json' ? 'application/json' : 'text/csv' 
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sentiment_data.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('การส่งออกข้อมูลล้มเหลว กรุณาลองใหม่อีกครั้ง');
+            }
+        }
+
+        // ========================= UTILITY FUNCTIONS =========================
+        function formatNumber(num) {
+            return new Intl.NumberFormat('th-TH').format(num);
+        }
+
+        function getContrastColor(hexColor) {
+            // Convert hex to RGB
+            const r = parseInt(hexColor.slice(1, 3), 16);
+            const g = parseInt(hexColor.slice(3, 5), 16);
+            const b = parseInt(hexColor.slice(5, 7), 16);
+            
+            // Calculate luminance
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        }
+
+        function animateValue(element, start, end, duration = 1000) {
+            const startTime = performance.now();
+            
+            function updateValue(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function
+                const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+                const current = start + (end - start) * easeOutCubic;
+                
+                element.textContent = Math.round(current).toLocaleString();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateValue);
+                }
+            }
+            
+            requestAnimationFrame(updateValue);
+        }
+
+        // ========================= THEME SWITCHING (Optional) =========================
+        function toggleTheme() {
+            // This function could be implemented for theme switching
+            document.documentElement.classList.toggle('light-theme');
+        }
+
+        // ========================= FINAL INITIALIZATION =========================
+        // Ensure all components are properly initialized
+        console.log('Sentimental Geo Intelligence Platform loaded successfully');
+        
+        // Add loading complete indicator
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 500);
+        });
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Scatter Plot with Top Lists</title>
+    <!-- 1. เรียกใช้ Plotly.js library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        .main-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            width: 100vw;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .plot-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+        }
+        #myDiv {
+            width: 55vw; /* Adjust width */
+            height: 80vh;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .side-list {
+            width: 20vw; /* Adjust width */
+            height: 90vh;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .side-list h2 {
+            font-size: 1.2em;
+            text-align: center;
+            margin-top: 0;
+            color: #000000;
+        }
+        .side-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .side-list li {
+            font-size: 0.9em;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            /* white-space: nowrap; */
+            /* overflow: hidden; */
+            /* text-overflow: ellipsis; */
+            cursor: help;
+        }
+        .side-list li:last-child {
+            border-bottom: none;
+        }
+        .side-list li .score {
+            font-weight: bold;
+        }
+        #neg-list .score { color: #F44336; }
+        #pos-list .score { color: #4CAF50; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div id="neg-list" class="side-list">
+            <h2>Top 5 Negative</h2>
+            <ul></ul>
+        </div>
+
+        <div class="plot-container">
+            <h1>3D Scatter Plot</h1>
+            <!-- 2. สร้าง Container สำหรับวางกราฟ -->
+            <div id="myDiv"></div>
+        </div>
+
+        <div id="pos-list" class="side-list">
+            <h2>Top 5 Positive</h2>
+            <ul></ul>
+        </div>
+    </div>
+
+
+    <script>
+        // 3. เขียน JavaScript เพื่อสร้างกราฟ 3 มิติ
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+
+                // --- Plotly Chart ---
+                // Map data for plot
+                const xData = data.map(item => item.neg);
+                const yData = data.map(item => item.pos);
+                const zData = data.map(item => item.neu);
+                const textData = data.map(item => item.text);
+
+                const trace1 = {
+                    x: xData, y: yData, z: zData,
+                    text: textData,
+                    hoverinfo: 'x+y+z+text',
+                    mode: 'markers',
+                    marker: {
+                        size: 5,
+                        color: zData,
+                        colorscale: 'Viridis',
+                        opacity: 0.8
+                    },
+                    type: 'scatter3d'
+                };
+
+                const layout = {
+                    title: 'Sentiment 3D Scatter Plot (neg, pos, neu)',
+                    autosize: true,
+                    margin: { l: 0, r: 0, b: 0, t: 40 },
+                    scene: {
+                        xaxis:{title: 'Negative'},
+                        yaxis:{title: 'Positive'},
+                        zaxis:{title: 'Neutral'},
+                    }
+                };
+
+                Plotly.newPlot('myDiv', [trace1], layout);
+
+
+                // --- Top 5 Lists ---
+                // Function to populate a list
+                const populateList = (elementId, dataList, scoreField) => {
+                    const ul = document.querySelector(`${elementId} ul`);
+                    if (!ul) return;
+                    
+                    dataList.forEach(item => {
+                        const li = document.createElement('li');
+                        li.title = item.text; // Full text on hover
+                        
+                        const scoreSpan = document.createElement('span');
+                        scoreSpan.className = 'score';
+                        scoreSpan.textContent = `(${item[scoreField].toFixed(3)}) `;
+                        
+                        li.appendChild(scoreSpan);
+                        li.append(item.text); // Append text content
+                        
+                        ul.appendChild(li);
+                    });
+                };
+
+                // Sort data and get top 5
+                const sortedByNeg = [...data].sort((a, b) => b.neg - a.neg);
+                const top5Neg = sortedByNeg.slice(0, 5);
+
+                const sortedByPos = [...data].sort((a, b) => b.pos - a.pos);
+                const top5Pos = sortedByPos.slice(0, 5);
+
+                // Populate the lists
+                populateList('#neg-list', top5Neg, 'neg');
+                populateList('#pos-list', top5Pos, 'pos');
+
+            })
+            .catch(error => console.error('Error loading data:', error));
+    </script>
+
+</body>
+</html>
