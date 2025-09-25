@@ -5,8 +5,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    container_name: sgi-backend
+  
     ports:
-      - "8000:8000"
+      - "6501:8000"
     volumes:
       - .:/app
 
@@ -14,7 +16,8 @@ services:
     image: node:18
     working_dir: /usr/src/app
     command: npx http-server -p 8080 -c-1
+    container_name: sgi-frontend
     ports:
-      - "8080:8080"
+      - "6502:8080"
     volumes:
       - .:/usr/src/app
