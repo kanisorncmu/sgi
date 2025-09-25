@@ -14,9 +14,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/read_sentiment")
+@app.get("/sgi_api/read_sentiment")
 def read_sentiment(limit: int = 0):
-    df = pd.read_csv("sentiment_geo_full 4.csv")
+    df = pd.read_csv("sentiment_geo_full4.csv")
     
     # Convert to datetime and sort by date descending
     df['date'] = pd.to_datetime(df['date'])

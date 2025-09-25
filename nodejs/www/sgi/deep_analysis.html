@@ -135,7 +135,7 @@
         const limitSelect = document.getElementById('limit-select');
 
         function fetchAndPlot(limit) {
-            const apiUrl = `http://localhost:8000/api/read_sentiment?limit=${limit}`;
+            const apiUrl = `https://geodev.fun/sgi_api/read_sentiment?limit=${limit}`;
             
             // Show loading state
             Plotly.purge('myDiv');

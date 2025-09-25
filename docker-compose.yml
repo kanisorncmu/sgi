@@ -1,0 +1,26 @@
+
+services:
+  backend:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    working_dir: /app
+    container_name: sgi-backend
+    ports:
+      - "6502:8000"
+    volumes:
+      - ./python:/app
+
+  nodejs:
+    image: node:20
+    platform: linux/amd64
+    working_dir: /app
+    container_name: sgi-frontend
+    depends_on:
+      - backend
+    ports:
+      - "6501:3000"
+    volumes:
+      - ./nodejs:/app
+    command: /bin/bash -c "npm install && npm i -g nodemon && nodemon"
