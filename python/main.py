@@ -21,6 +21,7 @@ def read_sentiment(limit: int = 0):
     # Convert to datetime and sort by date descending
     df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values(by='date', ascending=False)
+    print(df.head())
 
     if limit > 0:
         df = df.head(limit) # Use head() now since it's sorted descending

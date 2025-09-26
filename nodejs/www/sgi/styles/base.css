@@ -11,7 +11,7 @@
 }
 
 html, body { margin: 0; padding: 0; }
-body { font-family: sans-serif; background: #121212; color: #e0e0e0; }
+body { font-family: sans-serif; background: #0f172a; color: #e0e0e0; }
 
 /* Generic components */
 .btn-primary { cursor: pointer; }
